@@ -1,0 +1,46 @@
+{% extends 'base.html' %} 
+{% block content %}
+   <main class="col-md-10 col-lg-11 px-md-4">
+        <div class="d-flex justify-content-between flex-wrap flex-md nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+          <h1 class="h2">Dashboard</h1>
+          <div class="btn-toolbar mb-2 mb-md 0">
+              <div class="btn-group me-2">
+                  <a href="{% url 'addequipment' %}" class="btn btn-outline-success">+ Create</a>
+              </div>
+          </div>
+       </div>
+       
+       <div class="container">
+        {% include 'partials/message.html'%}
+         {% if equiment.count %}
+        <table class="table table-striped table-hover">
+          <thead>
+            <tr>
+              <th>Regno</th>
+              <th>Student Name</th>
+              <th>Equiment Name</th>
+              <th>date</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for equiments in equiment %}
+            <tr>
+              <td>{{equiments.regno}}</td>
+              <td>{{equiments.stud_name}}</td>
+              <td>{{equiments.category}}</td>
+              <td>{{equiments.date}}</td>
+              <td>{{equiments.borrowed_time}}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+    
+        {% endif %}
+      
+      </div>
+      </main>
+
+     
+   
+{% endblock %}

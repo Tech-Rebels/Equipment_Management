@@ -1,0 +1,140 @@
+{% extends 'base.html' %}{% block content %}
+
+<main class="col-md-10 col-lg-11 px-md-4">
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'index' %}">Dashboard</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">Add-equipment
+                </li>
+            </ol>
+        </nav>
+        <input type="text" class="form-control-sm" id="rfid" name="rfid" value="{{values.rfid}}" style="opacity: 0;">
+        <div class="card">
+            <div class="card-body">
+                <form action="{% url 'addequipment' %}" method="post">
+                    {% include 'partials/message.html'%}
+                    {% csrf_token %}
+                      
+                  
+                    <div class="form-group mb-3">
+                        <label for="">regno</label>
+                        <input type="text" class=" form-control form-control-sm"  id="regno" name="regno" value="{{values.regno}}" readonly>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="">student Name</label>
+                        <input type="text" class=" form-control form-control-sm" id="stud_name" name="stud_name" value="{{values.stud_name}}" readonly>
+                    </div>
+                    <!-- <div class="form-group mb-3">
+                        <label for="">student Email</label>
+                        <input type="email" class=" form-control form-control-sm" name="email" value="{{values.email}}">
+                    </div> -->
+                    
+                    <!-- <div class="form-group mb-3">
+                        <label for="">Lab Name</label>
+                        <input type="text" class=" form-control form-control-sm" name="lab_no" value="{{values.lab_no}}">
+                    </div>
+                    -->
+                    <div class="form-group mb-3">
+                        <label for="">Category</label>
+                        <select class="form-control" name="category" id="">
+                        {% for category in categories%}
+                            <option name="category" value="{{category.name}}">
+                                {{category.name}}
+                            </option>
+                        {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="">Date of Borrow</label>
+                        <input type="date" class="form-control form-control-sm" id="date" name="date">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="time">Time of Borrow</label>
+                        <input type="time" class="form-control form-control-sm" id="time" name="time">
+                    </div>
+
+                    <input type="submit" value="submit" class="btn btn-primary btn-primary-sm mb-3">
+                </form>
+                
+            </div>
+        </div>    
+    </div> 
+    <script>
+        const rfid =  document.getElementById("rfid")
+        setTimeout(() => {
+            rfid.focus();
+        }, 100);
+
+
+    
+    $(document).ready(function() {
+        function debounce(func, delay) {
+            let debounceTimer;
+            return function() {
+                const context = this;
+                const args = arguments;
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => func.apply(context, args), delay);
+            };
+        }
+
+        $('#rfid').on('input', debounce(function() {
+            var rfid = $(this).val();
+            if (rfid) {
+                $.ajax({
+                    url: '{% url "addequipment" %}',
+                    data: {
+                        'rfid': rfid
+                    },
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data.error) {
+                            alert(data.error);
+                        } else {
+                            $('#stud_name').val(data.name);
+                            $('#regno').val(data.regno);
+                            // $('#email').val(data.email); // Uncomment if you add the email field back
+                        }
+                    }
+                });
+            }
+        }, 300));  // Adjust the delay as needed
+    });
+
+    document.addEventListener("DOMContentLoaded", function() {
+        var today = new Date();
+
+        var istOffset = 5.5 * 60 * 60 * 1000; // IST offset in milliseconds
+        var istTime = new Date(today.getTime() + (today.getTimezoneOffset() * 60000) + istOffset);
+        // Get current date in IST
+        var year = istTime.getFullYear();
+        var month = ('0' + (istTime.getMonth() + 1)).slice(-2);
+        var day = ('0' + istTime.getDate()).slice(-2);
+        var formattedDate = year + '-' + day + '-' + month;
+        document.getElementById('date').value = formattedDate;
+
+        // Get current time in IST
+        var hours = addZero(istTime.getHours());
+        var minutes = addZero(istTime.getMinutes());
+        var seconds = addZero(istTime.getSeconds());
+        var current_time = `${hours}:${minutes}`;
+        document.getElementById('time').value = current_time;
+       
+
+
+    });
+
+    function addZero(num){
+        return num < 10 ? `0${num}`:num;
+    }
+        // get the cuurent time
+      
+
+    </script>
+</main>
+
+
+{% endblock  %}

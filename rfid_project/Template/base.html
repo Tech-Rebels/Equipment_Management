@@ -1,0 +1,93 @@
+
+{% load static %}
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
+    <meta name="generator" content="Hugo 0.104.2">
+    <title>Equiment Management {% block title %}
+        {% endblock %}
+    </title>    
+
+<link href="{% static 'css/bootstrap.min.css'%}" rel="stylesheet" >
+
+<link href="{% static 'css/main.css'%}" rel="stylesheet" >
+<link rel="stylesheet" href="{% static 'dashboard.css'%}">
+
+<link href="{% static 'sidebars.css'%}" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<!-- fonts link -->
+    <!-- Favicons -->
+<link rel="apple-touch-icon" href="/docs/5.2/assets/img/favicons/apple-touch-icon.png" sizes="180x180">
+<link rel="icon" href="/docs/5.2/assets/img/favicons/favicon-32x32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="/docs/5.2/assets/img/favicons/favicon-16x16.png" sizes="16x16" type="image/png">
+<link rel="manifest" href="/docs/5.2/assets/img/favicons/manifest.json">
+<link rel="mask-icon" href="/docs/5.2/assets/img/favicons/safari-pinned-tab.svg" color="#712cf9">
+<link rel="icon" href="/docs/5.2/assets/img/favicons/favicon.ico">
+<meta name="theme-color" content="#712cf9">
+<link rel="stylesheet" href="">
+
+<!-- request -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Custom styles for this template -->
+    <link href="dashboard.css" rel="stylesheet">
+  </head>
+  <body>
+    
+
+
+<header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
+  <div class="d-flex align-items-center col-md-3 col-lg-2 me-0 px-3 fs-6">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarToggleExternalContent" aria-controls="navbarToggleExternalContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <a class="navbar-brand ms-2" href="#">Equiment Management</a>
+  </div>
+
+  <ul class="navbar-nav px-3" style="display: flex; flex-direction: row; align-items: center;">
+    <li class="nav-item text-nowrap" style="margin-right: 10px;">
+      <span class="nav-link" href="">
+        abc
+      </span>
+    </li>
+    <li class="nav-item text-nowrap mt-3 ml-4">  
+      <form action="" >
+        {% csrf_token %}
+        <input class="text text-capitalize" type="submit" value="Logout">
+      </form>
+    </li>
+  </ul>
+
+</header>
+
+
+
+<div class="container-fluid">
+  <div class="row">
+   {% include 'partials/sidebar.html' %}
+   
+   {% block content %}
+
+   {% endblock %}
+   
+  </div>
+</div>
+    <script src="/docs/5.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
+
+      <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.28.0/dist/feather.min.js" integrity="sha384-uO3SXW5IuS1ZpFPKugNNWqTZRRglnUJK6UAZ/gxOX80nxEkN9NcGZTftn6RzhGWE" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js" integrity="sha384-zNy6FEbO50N+Cg5wap8IKA4M/ZnLJgzc6w2NqACZaK0u0FXfOWRRJOnQtpZun8ha" crossorigin="anonymous"></script>
+      <script src="{% static 'js/dashboard.js' %}"></script>
+  </body>
+</html>
+
+
+<script>
+  $(document).ready(function(){
+    // Assuming successful messages also have the "alert" class
+    $(".alert").hide(4000);
+  });
+</script>
