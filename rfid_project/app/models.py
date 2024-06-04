@@ -2,27 +2,6 @@ from django.db import models
 from django.utils.timezone import now
 
 # Create your models here.
-class Manage_Equiment(models.Model):
-    date = models.DateField(default=now)
-    borrowed_time = models.TimeField()
-    regno = models.CharField(max_length=100)
-    stud_name = models.CharField(max_length=100)
-    category = models.CharField(max_length=266)
-    # rfidno = models.CharField(max_length=100, unique=True)
-    # Lab = models.CharField(max_length=100, default='Default Lab')
-    # email = models.EmailField(default='default@example.com')
-
-    def __str__(self):
-        return self.regno    
-    class Meta:
-        ordering: ['-date'] # type: ignore
-class Equiment(models.Model):
-    eq_name = models.CharField(max_length=100)
-    Lab = models.CharField(max_length=100, default='01')
-    eq_id = models.CharField(max_length=100)
-    def __str__(self):
-        return self.eq_id
-    
 class Student(models.Model):
     rfidno = models.CharField(max_length=100, unique=True)
     regno = models.CharField(max_length=100, unique=True)
@@ -34,6 +13,43 @@ class Student(models.Model):
     year = models.IntegerField()
     def __str__(self):
         return self.name 
+    
+class Manage_Equiment(models.Model):
+    date = models.DateField(default=now)
+    borrowed_time = models.TimeField()
+    regno = models.CharField(max_length=100)
+    stud_name = models.ForeignKey(Student, null=True, on_delete=models.SET_NULL)
+    category = models.CharField(max_length=266)
+    returned_time = models.TimeField(null=True, blank=True)
+    status = models.BooleanField(default=False)
+    # handled_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    # Lab = models.CharField(max_length=100, default='Default Lab')
+
+
+    def __str__(self):
+        return self.regno    
+    class Meta:
+        ordering: ['-date'] # type: ignore
+
+    # def _str_(self):
+    #     return f"{self.borrowed_at if self.borrowed_at else 'Unknown'} - {self.handled_by.username if self.handled_by else 'Unknown'} - {self.student.regno if self.student else 'Unknown'} - {self.equipment.name if self.equipment else 'Unknown'}"
+    # class Meta:
+    #     ordering = ['-borrowed_at']
+
+class Equiment(models.Model):
+    name = models.CharField(max_length=100, null=True)
+    idno = models.CharField(max_length=100, null=True, blank=True)
+    count = models.IntegerField(default=0)
+    available = models.BooleanField(default=True)
+    category = models.CharField(max_length=100, null=True, blank=True)
+    # lab = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    
+    def __str__(self):
+        return self.idno
+    # def _str_(self):
+    #     return f"{self.lab.username} - {self.name}"
+    
+
       
 class Category(models.Model):
     name = models.CharField(max_length=255)
