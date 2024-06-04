@@ -2,23 +2,23 @@
 
 <main class="col-md-10 col-lg-11 px-md-4">
     <div class="container mt-4">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
+        <nav aria-label="breadcrumb" class="d-flex justify-content-between align-items-center">
+            <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item">
                     <a href="{% url 'index' %}">Dashboard</a>
                 </li>
-                <li class="breadcrumb-item active" aria-current="page">Add-equipment
-                </li>
+                <li class="breadcrumb-item active" aria-current="page">Add-equipment</li>
             </ol>
+            <button type="button" id="rescanButton" class="btn btn-info">Rescan</button>
         </nav>
+
         <input type="text" class="form-control-sm" id="rfid" name="rfid" value="{{values.rfid}}" style="opacity: 0;">
         <div class="card">
             <div class="card-body">
                 <form action="{% url 'addequipment' %}" method="post">
                     {% include 'partials/message.html'%}
                     {% csrf_token %}
-                      
-                  
+
                     <div class="form-group mb-3">
                         <label for="">regno</label>
                         <input type="text" class=" form-control form-control-sm"  id="regno" name="regno" value="{{values.regno}}" readonly>
@@ -31,7 +31,6 @@
                         <label for="">student Email</label>
                         <input type="email" class=" form-control form-control-sm" name="email" value="{{values.email}}">
                     </div> -->
-                    
                     <!-- <div class="form-group mb-3">
                         <label for="">Lab Name</label>
                         <input type="text" class=" form-control form-control-sm" name="lab_no" value="{{values.lab_no}}">
@@ -55,19 +54,29 @@
                         <label for="time">Time of Borrow</label>
                         <input type="time" class="form-control form-control-sm" id="time" name="time">
                     </div>
-
-                    <input type="submit" value="submit" class="btn btn-primary btn-primary-sm mb-3">
+                    <input type="submit" value="Submit" class="btn btn-primary btn-primary-sm mb-3">
                 </form>
-                
+               
             </div>
         </div>    
     </div> 
     <script>
+
         const rfid =  document.getElementById("rfid")
         setTimeout(() => {
             rfid.focus();
         }, 100);
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const rfidInput = document.getElementById('rfid');
+            const rescanButton = document.getElementById('rescanButton');
 
+            rescanButton.addEventListener('click', function(event) {
+                // Clear the RFID input box
+                rfidInput.value = '';
+                // Focus on the RFID input box
+                rfidInput.focus();
+            });
+        });
 
     
     $(document).ready(function() {
