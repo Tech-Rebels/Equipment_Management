@@ -50,12 +50,50 @@ def add_equiments(request):
             return render(request,'equiments/add_equiments.html', context)
          
     Manage_Equiment.objects.create(regno=regno,stud_name=stud_name,borrowed_time=time,
-                            category=category,date=date)
-    messages.success(request,'Equiment saved successsfully')
+                            category=category,borrowed_date=date)
+    messages.success(request,'Equipment saved successsfully')
     return redirect('index')
 
 
 def return_equipments(request):
+    if request.method == 'GET':
+        rfid = request.GET.get('rfid')
+        if rfid:
+            try:
+                student = Student.objects.get(rfidno=rfid)
+                try:
+                    manage_equiment = Manage_Equiment.objects.get(regno=student.regno)
+                    data = {
+                        'name': student.name,
+                        'regno': student.regno,
+                        'equipments': manage_equiment.category,
+                    }
+                except Manage_Equiment.DoesNotExist:
+                    data = {
+                        'name': student.name,
+                        'regno': student.regno,
+                        'equipments': None,
+                    }
+            except Student.DoesNotExist:
+                data = {'error': 'Student not found'}
+            return JsonResponse(data)
+        
+        return render(request,'equiments/return_equiments.html')
 
-    return render(request,'equiments/return_equiments.html')
-
+    if request.method == 'POST':
+        
+        return_date = request.POST['date']
+        return_time = request.POST['time']
+        stud_reg = request.POST['regno']
+        
+        try:
+            manage_equiment = Manage_Equiment.objects.get(regno=stud_reg)
+            manage_equiment.return_date = return_date
+            manage_equiment.return_time = return_time
+            manage_equiment.status = True
+            manage_equiment.save()
+            messages.success(request, 'Equipment returned successfully')
+        except Manage_Equiment.DoesNotExist:
+            messages.error(request, 'Equipment with this regno does not exist')
+        
+        return redirect('index')
