@@ -14,9 +14,10 @@
 <link href="{% static 'css/bootstrap.min.css'%}" rel="stylesheet" >
 
 <link href="{% static 'css/main.css'%}" rel="stylesheet" >
-<link rel="stylesheet" href="{% static 'dashboard.css'%}">
+
 
 <link href="{% static 'sidebars.css'%}" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/dashboard.css'%}">
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -36,6 +37,8 @@
     
     <!-- Custom styles for this template -->
     <link href="dashboard.css" rel="stylesheet">
+   
+
   </head>
   <body>
     
@@ -71,9 +74,11 @@
   <div class="row">
    {% include 'partials/sidebar.html' %}
    
-   {% block content %}
-
-   {% endblock %}
+   <main class="content col">
+    {% block content %}
+    <!-- Your content goes here -->
+    {% endblock %}
+</main>
    
   </div>
 </div>
