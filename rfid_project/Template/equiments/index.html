@@ -7,8 +7,84 @@
               <div class="btn-group me-2">
                   <a href="{% url 'addequipment' %}" class="btn btn-outline-success">+ Create</a>
               </div>
+              <div class="btn-group me-2">
+                <a href="{% url 'returnequipment' %}" class="btn btn-outline-danger">+ Return</a>
+            </div>
           </div>
        </div>
+
+       <!-- card -->
+       <div class="row g-6 mb-6">
+        <div class="col-xl-3 col-sm-6 col-12 mb-2">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col">
+                            <span class="h6 font-semibold text-muted text-sm d-block mb-2">Total No of Equipments</span>
+                            <span class="h3 font-bold mb-0">100</span>
+                        </div>
+                        <div class="col-auto d-flex align-items-center justify-content-center">
+                            <div class="icon icon-shape bg-success text-white text-lg rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                              <i class="fa fa-wrench" style="scale: 1.6;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6 col-12 mb-2">
+          <div class="card shadow-sm">
+              <div class="card-body">
+                <div class="row">
+                  <div class="col">
+                      <span class="h6 font-semibold text-muted text-sm d-block mb-2">No Of Taken</span>
+                      <span class="h3 font-bold mb-0">100</span>
+                  </div>
+                  <div class="col-auto d-flex align-items-center justify-content-center">
+                      <div class="icon icon-shape bg-warning text-white text-lg rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                        <i class="fa fa-wrench" style="scale: 1.6;"></i>
+                      </div>
+                  </div>
+              </div>
+              </div>
+          </div>
+      </div>
+      <div class="col-xl-3 col-sm-6 col-12 mb-2">
+        <div class="card shadow-sm ">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                    <span class="h6 font-semibold text-muted text-sm d-block mb-2">No of Returned</span>
+                    <span class="h3 font-bold mb-0">100</span>
+                </div>
+                <div class="col-auto d-flex align-items-center justify-content-center">
+                    <div class="icon icon-shape bg-danger text-white text-lg rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                      <i class="fa fa-wrench" style="scale: 1.6;"></i>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-sm-6 col-12 mb-2">
+        <div class="card shadow-sm ">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                    <span class="h6 font-semibold text-muted text-sm d-block mb-2">Pending To Returned</span>
+                    <span class="h3 font-bold mb-0">100</span>
+                </div>
+                <div class="col-auto d-flex align-items-center justify-content-center">
+                    <div class="icon icon-shape bg-secondary text-white text-lg rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                      <i class="fa fa-wrench" style="scale: 1.6;"></i>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+      </div>
+     </div>
+     <!-- table -->
        
        <div class="container">
         {% include 'partials/message.html'%}
@@ -21,6 +97,7 @@
               <th>Equiment Name</th>
               <th>date</th>
               <th>Time</th>
+              <th>Status</th>
             </tr>
           </thead>
           <tbody>
@@ -31,6 +108,11 @@
               <td>{{equiments.category}}</td>
               <td>{{equiments.date}}</td>
               <td>{{equiments.borrowed_time}}</td>
+              <td>{% if equiments.status == False %} <span style="color: red;">Pending to Return</span>
+                {% else %}
+                <span style="color: rgb(17, 229, 41);"> Returned </span>
+                {% endif %}
+            </td>
             </tr>
             {% endfor %}
           </tbody>

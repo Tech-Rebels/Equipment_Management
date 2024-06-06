@@ -55,3 +55,7 @@ def add_equiments(request):
     return redirect('index')
 
 
+def return_equipments(request):
+
+    return render(request,'equiments/return_equiments.html')
+
