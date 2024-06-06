@@ -21,7 +21,7 @@ class Manage_Equiment(models.Model):
     stud_name = models.CharField(max_length=100,null=True)
     category = models.CharField(max_length=266)
     returned_time = models.TimeField(null=True, blank=True)
-    borrowed_date = models.DateField(null=True, blank=True)
+    returned_date = models.DateField(null=True, blank=True)
     status = models.BooleanField(default=False)
      # stud_name = models.ForeignKey(Student, null=True, on_delete=models.SET_NULL)
     # handled_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)

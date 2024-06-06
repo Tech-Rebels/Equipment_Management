@@ -88,8 +88,8 @@ def return_equipments(request):
         
         try:
             manage_equiment = Manage_Equiment.objects.get(regno=stud_reg)
-            manage_equiment.return_date = return_date
-            manage_equiment.return_time = return_time
+            manage_equiment.returned_date = return_date
+            manage_equiment.returned_time = return_time
             manage_equiment.status = True
             manage_equiment.save()
             messages.success(request, 'Equipment returned successfully')
