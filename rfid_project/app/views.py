@@ -21,15 +21,19 @@ def add_equiments(request):
     if request.method == 'GET':
         rfid = request.GET.get('rfid')
         if rfid:
+            data = {}
             try:
                 student = Student.objects.get(rfidno=rfid)
-                data = {
-                    'name': student.name,
-                    'regno': student.regno,
-                    # 'email': student.email,
-                }
+                pending_equipment = Manage_Equiment.objects.filter(regno=student.regno, status=False)
+                if pending_equipment.exists():
+                    data['error'] = 'You have pending equipment to return'
+                else:
+                    data = {
+                        'name': student.name,
+                        'regno': student.regno,
+                    }
             except Student.DoesNotExist:
-                data = {'error': 'Student not found'}
+                data['error'] = 'Student not found'
             return JsonResponse(data)
         
         return render(request,'equiments/add_equiments.html',context)
@@ -59,15 +63,19 @@ def return_equipments(request):
     if request.method == 'GET':
         rfid = request.GET.get('rfid')
         if rfid:
+            data = {}
             try:
                 student = Student.objects.get(rfidno=rfid)
                 manage_equipment = Manage_Equiment.objects.filter(regno=student.regno, status=False)
                 equipment_names = [equipment.category for equipment in manage_equipment]
-                data = {
-                    'name': student.name,
-                    'regno': student.regno,
-                    'equipments': ', '.join(equipment_names),
-                }
+                if not manage_equipment.exists():
+                    data['error'] = 'You do not have pending equipment to return'
+                else:
+                    data = {
+                        'name': student.name,
+                        'regno': student.regno,
+                        'equipments': ', '.join(equipment_names),
+                    }
             except Student.DoesNotExist:
                 data = {'error': 'Student not found'}
             return JsonResponse(data)
