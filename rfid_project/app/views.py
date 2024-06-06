@@ -61,19 +61,13 @@ def return_equipments(request):
         if rfid:
             try:
                 student = Student.objects.get(rfidno=rfid)
-                try:
-                    manage_equiment = Manage_Equiment.objects.get(regno=student.regno)
-                    data = {
-                        'name': student.name,
-                        'regno': student.regno,
-                        'equipments': manage_equiment.category,
-                    }
-                except Manage_Equiment.DoesNotExist:
-                    data = {
-                        'name': student.name,
-                        'regno': student.regno,
-                        'equipments': None,
-                    }
+                manage_equipment = Manage_Equiment.objects.filter(regno=student.regno, status=False)
+                equipment_names = [equipment.category for equipment in manage_equipment]
+                data = {
+                    'name': student.name,
+                    'regno': student.regno,
+                    'equipments': ', '.join(equipment_names),
+                }
             except Student.DoesNotExist:
                 data = {'error': 'Student not found'}
             return JsonResponse(data)
@@ -87,11 +81,14 @@ def return_equipments(request):
         stud_reg = request.POST['regno']
         
         try:
-            manage_equiment = Manage_Equiment.objects.get(regno=stud_reg)
-            manage_equiment.returned_date = return_date
-            manage_equiment.returned_time = return_time
-            manage_equiment.status = True
-            manage_equiment.save()
+            manage_equipment = Manage_Equiment.objects.filter(regno=stud_reg,status=False)
+        
+        # Iterate over each Manage_Equiment object and update its attributes
+            for equipment in manage_equipment:
+                equipment.returned_date = return_date
+                equipment.returned_time = return_time
+                equipment.status = True
+                equipment.save()
             messages.success(request, 'Equipment returned successfully')
         except Manage_Equiment.DoesNotExist:
             messages.error(request, 'Equipment with this regno does not exist')
