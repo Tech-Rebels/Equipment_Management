@@ -25,7 +25,7 @@ class Manage_Equiment(models.Model):
     returned_date = models.DateField(null=True, blank=True)
     status = models.BooleanField(default=False)
      # stud_name = models.ForeignKey(Student, null=True, on_delete=models.SET_NULL)
-    # handled_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    handled_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     # Lab = models.CharField(max_length=100, default='Default Lab')
 
 

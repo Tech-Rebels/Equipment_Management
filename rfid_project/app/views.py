@@ -8,9 +8,10 @@ from django.contrib.auth import  authenticate,login,logout
 # Create your views here.
 def index(request):
     categories = Category.objects.all()
-    equiment = Manage_Equiment.objects.all() 
+    # equiment = Manage_Equiment.objects.all() 
+    equipment = Manage_Equiment.objects.filter(handled_by=request.user)
     context = {
-        'equiment' : equiment
+        'equiment' : equipment
     } 
     return render(request,'equiments/index.html',context)
 
@@ -26,7 +27,7 @@ def add_equiments(request):
             data = {}
             try:
                 student = Student.objects.get(rfidno=rfid)
-                pending_equipment = Manage_Equiment.objects.filter(regno=student.regno, status=False)
+                pending_equipment = Manage_Equiment.objects.filter(regno=student.regno, status=False,handled_by=request.user)
                 if pending_equipment.exists():
                     data['error'] = 'You have pending equipment to return'
                 else:
@@ -56,7 +57,7 @@ def add_equiments(request):
             return render(request,'equiments/add_equiments.html', context)
          
     Manage_Equiment.objects.create(regno=regno,stud_name=stud_name,borrowed_time=time,
-                            category=category,borrowed_date=date)
+                            category=category,borrowed_date=date,handled_by=request.user)
     messages.success(request,'Equipment saved successsfully')
     return redirect('index')
 
@@ -68,7 +69,7 @@ def return_equipments(request):
             data = {}
             try:
                 student = Student.objects.get(rfidno=rfid)
-                manage_equipment = Manage_Equiment.objects.filter(regno=student.regno, status=False)
+                manage_equipment = Manage_Equiment.objects.filter(regno=student.regno, status=False,handled_by=request.user)
                 equipment_names = [equipment.category for equipment in manage_equipment]
                 if not manage_equipment.exists():
                     data['error'] = 'You do not have pending equipment to return'
@@ -91,7 +92,7 @@ def return_equipments(request):
         stud_reg = request.POST['regno']
         
         try:
-            manage_equipment = Manage_Equiment.objects.filter(regno=stud_reg,status=False)
+            manage_equipment = Manage_Equiment.objects.filter(regno=stud_reg,status=False,handled_by=request.user)
         
         # Iterate over each Manage_Equiment object and update its attributes
             for equipment in manage_equipment:
