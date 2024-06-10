@@ -27,6 +27,7 @@ SECRET_KEY = 'django-insecure-(r08*-3&wtqn@=uov+_uiwfi!i%zlbw$a60v_yl6=j_!-(^#s#
 DEBUG = True
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.ngrok-free.app']
 CSRF_TRUSTED_ORIGINS = ["https://*.ngrok-free.app"]
+LOGIN_URL = 'login'
 
 # Application definition
 
@@ -37,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'app'
+    'app',
+    'crispy_forms',
 ]
 
 MIDDLEWARE = [
@@ -48,6 +50,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
 ]
 
 ROOT_URLCONF = 'rfid_project.urls'
@@ -123,7 +127,11 @@ STATICFILES_DIRS=[BASE_DIR/'Static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_ROOT = BASE_DIR / 'Images'
 
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
+# LOGIN_REDIRECT_URL = 'index'  # 3ex' to your desired redirect URL name
+# LOGOUT_REDIRECT_URL = 'login'
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+    {% load static %}
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <style>
+   
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h4 class="mb-3">User Login</h4>
+                <hr style="border-color: aliceblue;">
+                {% include 'partials/message.html'%}
+            </div>
+        </div>
+    </div>
+
+    <section class="py-4 my-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-6">
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label for="" class="form-label">User Name</label>
+                            <input type="text" name="username" id="username" class="form-control" placeholder="Enter User Name">
+                        </div>
+                        <div class="mb-4">
+                            <label for="" class="form-label">Password</label>
+                            <input type="password" name="password" id="password" class="form-control" placeholder="Enter Password">
+                        </div>
+                        <button type="submit" class="btn btn-primary"> Login</button>
+                    </form>
+                    <p class="my-2">Already user ?<a href="{% url  'register' %}">Login Now</a></p>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+</body>
+</html>

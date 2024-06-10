@@ -2,7 +2,9 @@ from django.shortcuts import render,redirect
 from .models import Category,Manage_Equiment,Student
 from django.contrib import messages
 from django.http import JsonResponse
-
+from django.contrib.auth.forms import UserCreationForm,AuthenticationForm
+from app.forms import CreateUserForm
+from django.contrib.auth import  authenticate,login,logout
 # Create your views here.
 def index(request):
     categories = Category.objects.all()
@@ -102,3 +104,40 @@ def return_equipments(request):
             messages.error(request, 'Equipment with this regno does not exist')
         
         return redirect('index')
+ 
+
+def register_page(request):
+    form=CreateUserForm()
+    if request.method=='POST':
+        form=CreateUserForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request,"Registration Success You can Login Now ..!")
+            return redirect('/login')
+    return render(request,'authentication/register.html',{'form':form})
+
+def logout_page(request):
+    if request.user.is_authenticated:
+        logout(request)
+        messages.success(request,"Logged out Successfully")
+    return redirect("/login")
+
+   
+def login_page(request):
+    if request.user.is_authenticated:
+        return redirect("/")
+    else:
+        if request.method == 'POST':
+            name=request.POST.get('username')
+            pwd=request.POST.get('password')
+            user = authenticate(request,username=name,password=pwd)
+            if user is not None:
+                login(request,user)
+                messages.success(request,"Logged in successfully")
+                return redirect("/")
+            else:
+                messages.error(request,"Invalid User Name or Password")
+                return redirect("/login")
+
+    return render(request,'authentication/login.html')
+
