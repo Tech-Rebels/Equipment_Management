@@ -1,12 +1,13 @@
 {% extends 'base.html' %}{% block content %}
 
+
     <div class="container mt-4">
         <nav aria-label="breadcrumb" class="d-flex justify-content-between align-items-center">
             <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item">
                     <a href="{% url 'index' %}">Dashboard</a>
                 </li>
-                <li class="breadcrumb-item active" aria-current="page">Return-equipment</li>
+                <li class="breadcrumb-item active" aria-current="page">Borrow-equipment</li>
             </ol>
             <button type="button" id="rescanButton" class="btn btn-info">Rescan</button>
         </nav>
@@ -14,7 +15,7 @@
         <input type="text" class="form-control-sm" id="rfid" name="rfid" value="{{values.rfid}}" style="opacity: 0;">
         <div class="card">
             <div class="card-body">
-                <form action="{% url 'returnequipment' %}" method="post">
+                <form action="{% url 'borrowequipment' %}" method="post">
                     {% include 'partials/message.html'%}
                     {% csrf_token %}
 
@@ -26,38 +27,35 @@
                         <label for="">student Name</label>
                         <input type="text" class=" form-control form-control-sm" id="stud_name" name="stud_name" value="{{values.stud_name}}" readonly>
                     </div>
-                    <div class="form-group mb-3">
-                        <label for="">Taken Equipments</label>
-                        <input type="text" class=" form-control form-control-sm" id="taken_eq" name="taken_eq" value="{{values.taken_eq}}">
-                    </div>
+                    <!-- <div class="form-group mb-3">
+                        <label for="">student Email</label>
+                        <input type="email" class=" form-control form-control-sm" name="email" value="{{values.email}}">
+                    </div> -->
                     <!-- <div class="form-group mb-3">
                         <label for="">Lab Name</label>
                         <input type="text" class=" form-control form-control-sm" name="lab_no" value="{{values.lab_no}}">
                     </div>
                     -->
-                    <!-- <div class="form-group mb-3">
-                        <label for="">Category</label>
-                        <select class="form-control" name="category" id="">
-                        {% for category in categories%}
-                            <option name="category" value="{{category.name}}">
-                                {{category.name}}
-                            </option>
-                        {% endfor %}
-                        </select>
-                    </div> -->
                     <div class="form-group mb-3">
-                        <label for="">Date of Return</label>
+                        <label for="">Category</label>
+                        <select class="form-control" name="equipment" id="equipment_name">
+                            {% for name in equipment_names %}
+                                <option value="{{ name }}">{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="">Date of Borrow</label>
                         <input type="date" class="form-control form-control-sm" id="date" name="date">
                     </div>
                     <div class="form-group mb-3">
-                        <label for="time">Time of Return</label>
+                        <label for="time">Time of Borrow</label>
                         <input type="time" class="form-control form-control-sm" id="time" name="time">
                     </div>
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                         <button type="submit" value="Submit" class="btn btn-success me-md-2" type="button">Submit</button>
                         <a href="{% url 'index' %}"><button class="btn btn-danger" type="button">Cancel</button></a>
                       </div>
-
                     <!-- <input type="submit" value="Submit" class="btn btn-primary btn-primary-sm mb-3"> -->
                 </form>
                
@@ -65,7 +63,7 @@
         </div>    
     </div> 
     <script>
-        //rescan button
+
         const rfid =  document.getElementById("rfid")
         setTimeout(() => {
             rfid.focus();
@@ -82,7 +80,7 @@
             });
         });
 
-    //get the rfid data from the server
+    
     $(document).ready(function() {
         function debounce(func, delay) {
             let debounceTimer;
@@ -98,7 +96,7 @@
             var rfid = $(this).val();
             if (rfid) {
                 $.ajax({
-                    url: '{% url "returnequipment" %}',
+                    url: '{% url "borrowequipment" %}',
                     data: {
                         'rfid': rfid
                     },
@@ -110,7 +108,6 @@
                             $('#stud_name').val(data.name);
                             $('#regno').val(data.regno);
                             // $('#email').val(data.email); // Uncomment if you add the email field back
-                            $('#taken_eq').val(data.equipments);
                         }
                     }
                 });
@@ -118,7 +115,6 @@
         }, 300));  // Adjust the delay as needed
     });
 
-    //getting the current date and time
     document.addEventListener("DOMContentLoaded", function() {
         var today = new Date();
 
@@ -137,13 +133,19 @@
         var seconds = addZero(istTime.getSeconds());
         var current_time = `${hours}:${minutes}`;
         document.getElementById('time').value = current_time;
+       
+
+
     });
+
     function addZero(num){
         return num < 10 ? `0${num}`:num;
     }
         // get the cuurent time
       
+
     </script>
+
 
 
 {% endblock  %}

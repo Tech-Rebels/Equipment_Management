@@ -1,5 +1,5 @@
 from django.shortcuts import render,redirect
-from .models import Category,Manage_Equiment,Student
+from .models import Category,Manage_Equiment,Student,Equiment
 from django.contrib import messages
 from django.http import JsonResponse
 from django.contrib.auth.forms import UserCreationForm,AuthenticationForm
@@ -15,19 +15,25 @@ def index(request):
     } 
     return render(request,'equiments/index.html',context)
 
-def add_equiments(request):
+def borrow_equiments(request):
+    if not request.user.is_authenticated:
+        return redirect('login')  # Redirect to login page if user is not authenticated
+    
+    equipment_names = Equiment.objects.filter(lab=request.user).values_list('name', flat=True).distinct()
     categories = Category.objects.all()
     context = {
+        'equipment_names': equipment_names,
         'categories': categories,
-        'values':request.POST
+        'values': request.POST
     }
+
     if request.method == 'GET':
         rfid = request.GET.get('rfid')
         if rfid:
             data = {}
             try:
                 student = Student.objects.get(rfidno=rfid)
-                pending_equipment = Manage_Equiment.objects.filter(regno=student.regno, status=False,handled_by=request.user)
+                pending_equipment = Manage_Equiment.objects.filter(regno=student.regno, status=False, handled_by=request.user)
                 if pending_equipment.exists():
                     data['error'] = 'You have pending equipment to return'
                 else:
@@ -39,27 +45,38 @@ def add_equiments(request):
                 data['error'] = 'Student not found'
             return JsonResponse(data)
         
-        return render(request,'equiments/add_equiments.html',context)
+        return render(request, 'equiments/borrow_equiments.html', context)
+    
     if request.method == 'POST':
         regno = request.POST['regno']
-        if not regno:
-            messages.error(request,'regno is required')
-            return render(request,'equiments/add_equiments.html', context)
-
         stud_name = request.POST['stud_name']
         date = request.POST['date']
-        category = request.POST['category']
+        category = request.POST['equipment']
         time = request.POST['time']
-        
-        # email = request.POST['email']
+
+        try:
+            equipment = Equiment.objects.get(name=category, lab=request.user)
+            equipment.available = False  # Mark the equipment as not available
+            equipment.save()  # Save the updated equipment
+        except Equiment.DoesNotExist:
+            messages.error(request, 'Equipment not found')
+            return render(request, 'equiments/borrow_equiments.html', context)
+
         if not stud_name:
-            messages.error(request,'stud_name is required')
-            return render(request,'equiments/add_equiments.html', context)
-         
-    Manage_Equiment.objects.create(regno=regno,stud_name=stud_name,borrowed_time=time,
-                            category=category,borrowed_date=date,handled_by=request.user)
-    messages.success(request,'Equipment saved successsfully')
-    return redirect('index')
+            messages.error(request, 'Student name is required')
+            return render(request, 'equiments/borrow_equiments.html', context)
+        
+        Manage_Equiment.objects.create(
+            regno=regno,
+            stud_name=stud_name,
+            borrowed_time=time,
+            category=category,
+            borrowed_date=date,
+            handled_by=request.user
+        )
+
+        messages.success(request, 'Equipment borrowed successfully')
+        return redirect('index')
 
 
 def return_equipments(request):
@@ -90,19 +107,26 @@ def return_equipments(request):
         return_date = request.POST['date']
         return_time = request.POST['time']
         stud_reg = request.POST['regno']
+        equipment = request.POST['taken_eq']
         
         try:
             manage_equipment = Manage_Equiment.objects.filter(regno=stud_reg,status=False,handled_by=request.user)
-        
+            equipment = Equiment.objects.get(name=equipment, lab=request.user)
         # Iterate over each Manage_Equiment object and update its attributes
             for equipment in manage_equipment:
                 equipment.returned_date = return_date
                 equipment.returned_time = return_time
                 equipment.status = True
                 equipment.save()
+            
+                # Update the 'available' attribute to True
+            equipment.available = True
+            equipment.save()  
             messages.success(request, 'Equipment returned successfully')
         except Manage_Equiment.DoesNotExist:
             messages.error(request, 'Equipment with this regno does not exist')
+       
+
         
         return redirect('index')
  
@@ -142,3 +166,25 @@ def login_page(request):
 
     return render(request,'authentication/login.html')
 
+def add_equiments(request):
+    if request.method == 'GET':
+        return render(request,'equiments/add_equiments.html' )
+    
+    if request.method == 'POST':
+        name = request.POST['name']
+        idno = request.POST['idno']
+        Category = request.POST['Category']
+
+
+        if not name:
+            messages.error(request,'name is required')
+            return render(request,'equiments/add_equiments.html')
+         
+    Equiment.objects.create(name=name,idno=idno,category=Category,
+                            lab=request.user)
+    messages.success(request,'Equipment saved successsfully')
+    return redirect('index')
+        
+
+
+    
