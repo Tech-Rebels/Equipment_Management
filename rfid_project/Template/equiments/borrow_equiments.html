@@ -27,15 +27,11 @@
                         <label for="">student Name</label>
                         <input type="text" class=" form-control form-control-sm" id="stud_name" name="stud_name" value="{{values.stud_name}}" readonly>
                     </div>
-                    <!-- <div class="form-group mb-3">
-                        <label for="">student Email</label>
-                        <input type="email" class=" form-control form-control-sm" name="email" value="{{values.email}}">
-                    </div> -->
-                    <!-- <div class="form-group mb-3">
-                        <label for="">Lab Name</label>
-                        <input type="text" class=" form-control form-control-sm" name="lab_no" value="{{values.lab_no}}">
+                    <div class="form-group mb-3">
+                        <label for="student_image">Student Image</label>
+                        <img id="student_image"  alt="Student Image" class="img-fluid mb-3">
                     </div>
-                    -->
+                   
                     <div class="form-group mb-3">
                         <label for="">Category</label>
                         <select class="form-control" name="equipment" id="equipment_name">
@@ -107,6 +103,7 @@
                         } else {
                             $('#stud_name').val(data.name);
                             $('#regno').val(data.regno);
+                            $('#student_image').attr('src', data.image_url);
                             // $('#email').val(data.email); // Uncomment if you add the email field back
                         }
                     }

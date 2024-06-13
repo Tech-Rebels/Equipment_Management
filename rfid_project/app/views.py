@@ -40,6 +40,7 @@ def borrow_equiments(request):
                     data = {
                         'name': student.name,
                         'regno': student.regno,
+                        'image_url': student.photo.url if student.photo else '',
                     }
             except Student.DoesNotExist:
                 data['error'] = 'Student not found'
@@ -94,6 +95,7 @@ def return_equipments(request):
                     data = {
                         'name': student.name,
                         'regno': student.regno,
+                        'image_url': student.photo.url if student.photo else '',
                         'equipments': ', '.join(equipment_names),
                     }
             except Student.DoesNotExist:
@@ -186,5 +188,10 @@ def add_equiments(request):
     return redirect('index')
         
 
-
+def history(request):
+    equipment = Manage_Equiment.objects.filter(handled_by=request.user)
+    context = {
+        'equiment' : equipment
+    } 
+    return render(request,'equiments/history.html',context)
     

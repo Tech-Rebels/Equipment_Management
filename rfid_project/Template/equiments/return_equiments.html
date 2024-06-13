@@ -27,6 +27,10 @@
                         <input type="text" class=" form-control form-control-sm" id="stud_name" name="stud_name" value="{{values.stud_name}}" readonly>
                     </div>
                     <div class="form-group mb-3">
+                        <label for="student_image">Student Image</label>
+                        <img id="student_image"  alt="Student Image" class="img-fluid mb-3">
+                    </div>
+                    <div class="form-group mb-3">
                         <label for="">Taken Equipments</label>
                         <input type="text" class=" form-control form-control-sm" id="taken_eq" name="taken_eq" value="{{values.taken_eq}}">
                     </div>
@@ -111,6 +115,7 @@
                             $('#regno').val(data.regno);
                             // $('#email').val(data.email); // Uncomment if you add the email field back
                             $('#taken_eq').val(data.equipments);
+                            $('#student_image').attr('src', data.image_url);
                         }
                     }
                 });

@@ -7,6 +7,7 @@ class Student(models.Model):
     rfidno = models.CharField(max_length=100, unique=True)
     regno = models.CharField(max_length=100, unique=True)
     name = models.CharField(max_length=100)
+    photo = models.ImageField(upload_to='student_photos/', null=True, blank=True)
     email = models.EmailField(unique=True, null=True, blank=True)
     phone = models.CharField(max_length=10, null=True, blank=True)
     department = models.CharField(max_length=100, null=True)
