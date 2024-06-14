@@ -13,7 +13,7 @@ body {
    */
 .sidebar {
     position: fixed;
-    top: 9px;
+    top: 0px;
     bottom: 0;
     left: 0;
     z-index: 100;
@@ -38,3 +38,16 @@ body {
 } 
 
 /* nav bar */
+.navbar {
+  height: 50px; /* Adjust this value as needed */
+}
+.navbar-toggler {
+  padding: 0.25rem 0.75rem; /* Adjust this value to reduce the height */
+}
+.navbar-toggler-icon {
+  width: 1.5em; /* Adjust this value as needed */
+  height: 1.5em; /* Adjust this value as needed */
+}
+.navbar-brand {
+  font-size: 1.25rem; /* Adjust this value as needed */
+}

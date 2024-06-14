@@ -5,13 +5,18 @@ from django.http import JsonResponse
 from django.contrib.auth.forms import UserCreationForm,AuthenticationForm
 from app.forms import CreateUserForm
 from django.contrib.auth import  authenticate,login,logout
+from django.core.paginator import Paginator
 # Create your views here.
 def index(request):
     categories = Category.objects.all()
     # equiment = Manage_Equiment.objects.all() 
     equipment = Manage_Equiment.objects.filter(handled_by=request.user)
+    paginator = Paginator(equipment,10)
+    page_number = request.GET.get('page')
+    page_obj = Paginator.get_page(paginator,page_number)
     context = {
-        'equiment' : equipment
+        'equiment' : equipment,
+        'page_obj' : page_obj
     } 
     return render(request,'equiments/index.html',context)
 
@@ -190,8 +195,12 @@ def add_equiments(request):
 
 def history(request):
     equipment = Manage_Equiment.objects.filter(handled_by=request.user)
+    paginator = Paginator(equipment,10)
+    page_number = request.GET.get('page')
+    page_obj = Paginator.get_page(paginator,page_number)
     context = {
-        'equiment' : equipment
+        'equiment' : equipment,
+        'page_obj' : page_obj
     } 
     return render(request,'equiments/history.html',context)
     
