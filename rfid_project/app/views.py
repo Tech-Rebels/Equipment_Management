@@ -145,19 +145,19 @@ def register_page(request):
         if form.is_valid():
             form.save()
             messages.success(request,"Registration Success You can Login Now ..!")
-            return redirect('/login')
+            return redirect('login')
     return render(request,'authentication/register.html',{'form':form})
 
 def logout_page(request):
     if request.user.is_authenticated:
         logout(request)
         messages.success(request,"Logged out Successfully")
-    return redirect("/login")
+    return redirect("login")
 
    
 def login_page(request):
     if request.user.is_authenticated:
-        return redirect("/")
+        return redirect("index")
     else:
         if request.method == 'POST':
             name=request.POST.get('username')
@@ -166,31 +166,14 @@ def login_page(request):
             if user is not None:
                 login(request,user)
                 messages.success(request,"Logged in successfully")
-                return redirect("/")
+                return redirect("index")
             else:
                 messages.error(request,"Invalid User Name or Password")
                 return redirect("/login")
 
     return render(request,'authentication/login.html')
 
-def add_equiments(request):
-    if request.method == 'GET':
-        return render(request,'equiments/add_equiments.html' )
-    
-    if request.method == 'POST':
-        name = request.POST['name']
-        idno = request.POST['idno']
-        Category = request.POST['Category']
 
-
-        if not name:
-            messages.error(request,'name is required')
-            return render(request,'equiments/add_equiments.html')
-         
-    Equiment.objects.create(name=name,idno=idno,category=Category,
-                            lab=request.user)
-    messages.success(request,'Equipment saved successsfully')
-    return redirect('index')
         
 
 def history(request):
@@ -203,4 +186,64 @@ def history(request):
         'page_obj' : page_obj
     } 
     return render(request,'equiments/history.html',context)
+# Equipments
+def equipments(request):
+    equipment = Equiment.objects.filter(lab=request.user) 
+    context = {
+        'equipment': equipment
+    }
+    return render(request,'equiments/equipments.html',context)
+
+def add_equiments(request):
+    if request.method == 'GET':
+        return render(request,'equiments/add_equiments.html' )
     
+    if request.method == 'POST':
+        name = request.POST['name']
+        count = request.POST['count']
+        if not name:
+            messages.error(request,'name is required')
+            return render(request,'equiments/add_equiments.html')
+         
+    Equiment.objects.create(name=name,count=count,
+                            lab=request.user)
+    messages.success(request,'Equipment saved successsfully')
+    return redirect('index')
+
+def edit_equipment(request,id):
+    try:
+        equipment = Equiment.objects.get(lab=request.user, id=id)
+    except Equiment.DoesNotExist:
+        messages.error(request, 'Equipment not found.')
+        return redirect('equipments')
+
+    context = {
+        'equipment': equipment,
+        'values': equipment,
+    }
+
+    if request.method == 'GET':
+
+        return render(request,'equiments/edit_equipments.html',context)
+    # else:
+    #     messages.info(request,'Handling post form')
+    #     return render(request,'equiments/edit_equipments.html',context)
+    
+    if request.method == 'POST':
+        equipment = Equiment.objects.get(id=id, lab=request.user)
+        name = request.POST['name']
+        count = request.POST['count']
+        if not name:
+            messages.error(request,'name is required')
+            return render(request,'equiments/edit_equipments.html')
+         
+        equipment.name = name
+        equipment.count = count
+        equipment.save()
+    messages.success(request,'Equipment saved successsfully')
+    return redirect('equipments')
+def delete_equipment(request,id):
+    equipment = Equiment.objects.get(id=id, lab=request.user)
+    equipment.delete()
+    messages.success(request,'Equipment Deleted Successsfully')
+    return redirect('equipments')

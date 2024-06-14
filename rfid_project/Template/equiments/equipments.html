@@ -1,0 +1,112 @@
+{% extends 'base.html' %} 
+{% block content %}
+<style>
+      .custom-btn-small {
+            padding: 0.2rem 0.4rem; 
+            border-radius: 10px; 
+            font-size: 0.8rem; 
+        }
+    .center-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .table td,.table th{
+            text-align: center; 
+        }
+    
+        .btn-group-center {
+            display: flex;
+            justify-content: center; 
+            gap: 0.5rem;    
+        }
+</style>
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center  pb-2 mb-3 border-bottom"> <!--pt-3-->
+        <h1 class="h2">Equipments</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a href="{% url 'addequipment' %}" class="btn btn-outline-success">+ Add</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card Section -->
+    <div class="row g-6 mb-6">
+        <div class="col-xl-3 col-sm-6 col-12 mb-2">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col">
+                            <span class="h6 font-semibold text-muted text-sm d-block mb-2">Total No of Equipments</span>
+                            <span class="h3 font-bold mb-0">100</span>
+                        </div>
+                        <div class="col-auto d-flex align-items-center justify-content-center">
+                            <div class="icon icon-shape bg-secondary text-white text-lg rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                <i class="fa fa-wrench" style="scale: 1.6;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6 col-12 mb-2">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col">
+                            <span class="h6 font-semibold text-muted text-sm d-block mb-2">No of Taken</span>
+                            <span class="h3 font-bold mb-0">100</span>
+                        </div>
+                        <div class="col-auto d-flex align-items-center justify-content-center">
+                            <div class="icon icon-shape bg-danger text-white text-lg rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                <i class="fa fa-wrench" style="scale: 1.6;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6 col-12 mb-2C">
+        <form class="d-flex" role="search">
+            <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+            <button class="btn btn-outline-success" type="submit">Search</button>
+          </form>
+        </div>
+       
+    </div>
+
+    <!-- Table Section -->
+    <div class="container center-container">
+        <div class="w-75">
+            {% include 'partials/message.html' %}
+            
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Equipment Name</th>
+                        <th>Counts</th>
+                        <th class="btn-group-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for equiments in equipment %}
+                    <tr>
+                        <td>{{ equiments.name }}</td>
+                        <td>{{ equiments.count }}</td>
+                        <td class="btn-group-center">
+                        <a href="{% url 'editequipment' equiments.id %}" class="btn btn-outline-success custom-btn-small">
+                            Edit
+                        </a>
+                        <a href="{% url 'deleteequipment' equiments.id %}" class="btn btn-outline-danger custom-btn-small">
+                            delete
+                        </a>
+                        
+                    </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+{% endblock %}
