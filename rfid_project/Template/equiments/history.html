@@ -1,5 +1,10 @@
 {% extends 'base.html' %} 
 {% block content %}
+    <style>
+         .custom-btn{
+        border-radius: 12px; 
+    }
+    </style>
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center  pb-2 mb-3 border-bottom"> <!--pt-3-->
         <h1 class="h2">History</h1>
     </div>
@@ -45,11 +50,11 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col">
-                            <span class="h6 font-semibold text-muted text-sm d-block mb-2">No of Returned</span>
+                            <span class="h6 font-semibold text-muted text-sm d-block mb-2">No of Taken</span>
                             <span class="h3 font-bold mb-0">100</span>
                         </div>
                         <div class="col-auto d-flex align-items-center justify-content-center">
-                            <div class="icon icon-shape bg-success text-white text-lg rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                            <div class="icon icon-shape bg-danger text-white text-lg rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
                                 <i class="fa fa-wrench" style="scale: 1.6;"></i>
                             </div>
                         </div>
@@ -57,38 +62,30 @@
                 </div>
             </div>
         </div>
-        <div class="col-xl-3 col-sm-6 col-12 mb-2">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col">
-                            <span class="h6 font-semibold text-muted text-sm d-block mb-2">Pending To Returned</span>
-                            <span class="h3 font-bold mb-0">100</span>
-                        </div>
-                        <div class="col-auto d-flex align-items-center justify-content-center">
-                            <div class="icon icon-shape bg-warning text-white text-lg rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                <i class="fa fa-wrench" style="scale: 1.6;"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="col-xl-3 col-sm-6 col-12 mb-2 d-flex justify-content-center align-items-center">
+            <form class="d-flex" role="search">
+                <input class="form-control me-2" id="searchfield" type="search" placeholder="Search" aria-label="Search">
+                <button class="btn btn-outline-danger custom-btn" type="submit">Cancel</button>
+            </form>
         </div>
     </div>
-
-    <!-- Table Section -->
+    
+    
+   
      <!-- Table Section -->
      <div class="container">
         {% include 'partials/message.html'%}
-        
+        <div class="app-table">
         <table class="table table-striped table-hover">
             <thead>
                 <tr>
                     <th>Regno</th>
                     <th>Student Name</th>
                     <th>Equipment Name</th>
-                    <th>Date</th>
-                    <th>Time</th>
+                    <th>Borrow Date</th>
+                    <th>Borrow Time</th>
+                    <th>Returned Date</th>
+                    <th>Returned Time</th>
                     <th>Status</th>
                 </tr>
             </thead>
@@ -100,6 +97,8 @@
                     <td>{{equiments.category}}</td>
                     <td>{{equiments.borrowed_date}}</td>
                     <td>{{equiments.borrowed_time}}</td>
+                    <td>{{equiments.returned_date}}</td>
+                    <td>{{equiments.returned_time}}</td>
                     <td>{% if equiments.status == False %} <span style="color: red;">Pending to Return</span>
                         {% else %}
                         <span style="color: rgb(25, 135, 84); font-weight: bold ;"> Returned </span>
@@ -109,6 +108,28 @@
                 {% endfor %}
             </tbody>
         </table>
+    </div>
+    
+    <div class="table-output" style="display: none;">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Regno</th>
+                    <th>Student Name</th>
+                    <th>Equipment Name</th>
+                    <th>Borrow Date</th>
+                    <th>Borrow Time</th>
+                    <th>Returned Date</th>
+                    <th>Returned Time</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="search-results">
+               
+            </tbody>
+        </table>
+    </div>
+
         <div class="">
             Showing page {{page_obj.number}} of {{page_obj.paginator.num_pages}}
         </div>
@@ -130,4 +151,59 @@
         </ul>
 
     </div>
+
+    <script>
+    const searchfield = document.querySelector("#searchfield");
+    const tableoutput = document.querySelector(".table-output");
+    const apptable = document.querySelector(".app-table");
+    const searchResults = document.querySelector("#search-results");
+
+    searchfield.addEventListener("keyup", (e) => {
+        const searchValue = e.target.value;
+
+        if (searchValue.length > 0) {
+            console.log("searchValue", searchValue);
+
+            fetch("{% url 'searchhistory' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}",
+                },
+                body: JSON.stringify({ searchText: searchValue }),
+            })
+            .then((res) => res.json())
+            .then((data) => {
+                console.log("data", data);
+
+                apptable.style.display = "none";
+                tableoutput.style.display = "block";
+                searchResults.innerHTML = "";
+
+                if (data.length === 0) {
+                    searchResults.innerHTML = "<tr><td colspan='3'>No result found</td></tr>";
+                } else {
+                    data.forEach((item) => {
+                        searchResults.innerHTML += `
+                        <tr>
+                            <td>${item.regno}</td>
+                            <td>${item.stud_name}</td>
+                            <td>${item.category}</td>
+                            <td>${item.borrowed_date}</td>
+                            <td>${item.borrowed_time}</td>
+                            <td>${item.returned_date}</td>
+                            <td>${item.returned_time}</td>
+                            <td>${item.status ? "<span style='color: rgb(25, 135, 84); font-weight: bold;'>Returned</span>" : "<span style='color: red;'>Pending to Return</span>"}</td>
+                           
+                        </tr>`;
+                    });
+                }
+            });
+        } else {
+            tableoutput.style.display = "none";
+            apptable.style.display = "block";
+        }
+    });
+</script>
+    </script>
 {% endblock %}

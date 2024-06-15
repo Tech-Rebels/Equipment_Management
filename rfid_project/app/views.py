@@ -7,6 +7,7 @@ from app.forms import CreateUserForm
 from django.contrib.auth import  authenticate,login,logout
 from django.core.paginator import Paginator
 import json
+from django.views.decorators.csrf import csrf_exempt
 # Create your views here.
 def index(request):
     categories = Category.objects.all()
@@ -41,7 +42,7 @@ def borrow_equiments(request):
                 student = Student.objects.get(rfidno=rfid)
                 pending_equipment = Manage_Equiment.objects.filter(regno=student.regno, status=False, handled_by=request.user)
                 if pending_equipment.exists():
-                    data['error'] = 'You have pending equipment to return'
+                    data['error'] = 'You have pending equipment to return or Add equipments'
                 else:
                     data = {
                         'name': student.name,
@@ -175,11 +176,11 @@ def login_page(request):
     return render(request,'authentication/login.html')
 
 
-        
+#History  
 
 def history(request):
     equipment = Manage_Equiment.objects.filter(handled_by=request.user)
-    paginator = Paginator(equipment,10)
+    paginator = Paginator(equipment,8)
     page_number = request.GET.get('page')
     page_obj = Paginator.get_page(paginator,page_number)
     context = {
@@ -187,7 +188,21 @@ def history(request):
         'page_obj' : page_obj
     } 
     return render(request,'equiments/history.html',context)
-# Equipments
+
+def search_history(request):
+    if request.method == 'POST':
+        search_str = json.loads(request.body).get('searchText')
+        transc_history = Manage_Equiment.objects.filter(regno__icontains=search_str, handled_by= request.user) | Manage_Equiment.objects.filter(
+            stud_name__icontains=search_str,handled_by= request.user) | Manage_Equiment.objects.filter(
+            category__icontains= search_str,handled_by =request.user)
+        data = transc_history.values()
+        return JsonResponse(list(data),safe=False)
+        
+
+
+
+
+# Equipments function
 def equipments(request):
     equipment = Equiment.objects.filter(lab=request.user) 
     context = {
