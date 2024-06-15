@@ -6,6 +6,7 @@ from django.contrib.auth.forms import UserCreationForm,AuthenticationForm
 from app.forms import CreateUserForm
 from django.contrib.auth import  authenticate,login,logout
 from django.core.paginator import Paginator
+import json
 # Create your views here.
 def index(request):
     categories = Category.objects.all()
@@ -208,7 +209,7 @@ def add_equiments(request):
     Equiment.objects.create(name=name,count=count,
                             lab=request.user)
     messages.success(request,'Equipment saved successsfully')
-    return redirect('index')
+    return redirect('equipments')
 
 def edit_equipment(request,id):
     try:
@@ -247,3 +248,12 @@ def delete_equipment(request,id):
     equipment.delete()
     messages.success(request,'Equipment Deleted Successsfully')
     return redirect('equipments')
+
+def search_equipment(request):
+    if request.method == 'POST':
+        search_str = json.loads(request.body).get('searchText')
+        equipment = Equiment.objects.filter(count__istartswith=search_str, lab=request.user) | Equiment.objects.filter(
+            name__icontains=search_str, lab=request.user)
+        data = equipment.values()
+
+        return JsonResponse(list(data), safe=False)
