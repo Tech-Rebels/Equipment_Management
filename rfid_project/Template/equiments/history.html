@@ -9,8 +9,10 @@
         <h1 class="h2">History</h1>
     </div>
 
+   
     <!-- Card Section -->
-    <div class="row g-6 mb-6">
+    <div class="row g-4 mb-3">
+        <!-- Card 1: Total No of Equipments -->
         <div class="col-xl-3 col-sm-6 col-12 mb-2">
             <div class="card shadow-sm">
                 <div class="card-body">
@@ -27,41 +29,30 @@
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="col-xl-3 col-sm-6 col-12 mb-2">
-            <div class="card shadow-sm">
+        </div> 
+        <!-- Card 2: Date Filters -->
+        <div class="col-xxl-5 col-md-6 mb-4">
+            <div class="card shadow-sm h-100"> <!-- Added h-100 class to ensure equal height -->
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col">
-                            <span class="h6 font-semibold text-muted text-sm d-block mb-2">No of Taken</span>
-                            <span class="h3 font-bold mb-0">100</span>
+                    <div class="row align-items-end">
+                        <div class="col-md-4 mb-1">
+                            <label for="start_date" class="form-label">Start Date</label>
+                            <input type="date" id="start_date" class="form-control">
                         </div>
-                        <div class="col-auto d-flex align-items-center justify-content-center">
-                            <div class="icon icon-shape bg-danger text-white text-lg rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                <i class="fa fa-wrench" style="scale: 1.6;"></i>
-                            </div>
+                        <div class="col-md-4 mb-1">
+                            <label for="end_date" class="form-label">End Date</label>
+                            <input type="date" id="end_date" class="form-control">
+                        </div>
+                        <div class="col-md-4 mb-1 ">
+                            <button class="btn btn-outline-success custom-btn" id="filter-button">search</button>
+                            <button class="btn btn-outline-danger custom-btn" type="submit">Cancel</button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-xl-3 col-sm-6 col-12 mb-2">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col">
-                            <span class="h6 font-semibold text-muted text-sm d-block mb-2">No of Taken</span>
-                            <span class="h3 font-bold mb-0">100</span>
-                        </div>
-                        <div class="col-auto d-flex align-items-center justify-content-center">
-                            <div class="icon icon-shape bg-danger text-white text-lg rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                <i class="fa fa-wrench" style="scale: 1.6;"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    
+        <!-- Card 3: Search Form -->
         <div class="col-xl-3 col-sm-6 col-12 mb-2 d-flex justify-content-center align-items-center">
             <form class="d-flex" role="search">
                 <input class="form-control me-2" id="searchfield" type="search" placeholder="Search" aria-label="Search">
@@ -69,6 +60,9 @@
             </form>
         </div>
     </div>
+    
+    
+    
     
     
    
@@ -204,6 +198,53 @@
             apptable.style.display = "block";
         }
     });
+    // date filter
+    const filterButton = document.querySelector("#filter-button");
+    filterButton.addEventListener("click", () => {
+        const startDate = document.querySelector("#start_date").value;
+        const endDate = document.querySelector("#end_date").value;
+        if (startDate.length > 0 && endDate.length > 0) {
+        fetch("{% url 'filterhistory' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}",  
+            },
+            body: JSON.stringify({ startDate:startDate, endDate:endDate }),
+        })
+        .then((res) => res.json())
+        .then((data) => {
+            console.log("data", data);
+
+            apptable.style.display = "none";
+            tableoutput.style.display = "block";
+            searchResults.innerHTML = "";
+
+            if (data.length === 0) {
+                searchResults.innerHTML = "<tr><td colspan='8'>No result found</td></tr>";
+            } else {
+                data.forEach((item) => {
+                    searchResults.innerHTML += `
+                    <tr>
+                        <td>${item.regno}</td>
+                        <td>${item.stud_name}</td>
+                        <td>${item.category}</td>
+                        <td>${item.borrowed_date}</td>
+                        <td>${item.borrowed_time}</td>
+                        <td>${item.returned_date}</td>
+                        <td>${item.returned_time}</td>
+                        <td>${item.status ? "<span style='color: rgb(25, 135, 84); font-weight: bold;'>Returned</span>" : "<span style='color: red;'>Pending to Return</span>"}</td>
+                    </tr>`;
+                });
+            }
+        }); 
+    } else { 
+    tableoutput.style.display = "none";
+    apptable.style.display = "block";
+    }
+    });
+
+
 </script>
-    </script>
+
 {% endblock %}

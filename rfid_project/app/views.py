@@ -194,10 +194,19 @@ def search_history(request):
         search_str = json.loads(request.body).get('searchText')
         transc_history = Manage_Equiment.objects.filter(regno__icontains=search_str, handled_by= request.user) | Manage_Equiment.objects.filter(
             stud_name__icontains=search_str,handled_by= request.user) | Manage_Equiment.objects.filter(
-            category__icontains= search_str,handled_by =request.user)
+            category__icontains= search_str,handled_by =request.user) 
         data = transc_history.values()
         return JsonResponse(list(data),safe=False)
-        
+    
+def filter_history(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        start_date = data.get('startDate')
+        end_date = data.get('endDate')
+        filtered_results = Manage_Equiment.objects.filter(
+            borrowed_date__range=[start_date, end_date]
+        ,handled_by= request.user).values()
+        return JsonResponse(list(filtered_results), safe=False)
 
 
 
