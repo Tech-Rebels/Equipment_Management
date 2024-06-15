@@ -45,7 +45,7 @@
                         </div>
                         <div class="col-md-4 mb-1 ">
                             <button class="btn btn-outline-success custom-btn" id="filter-button">search</button>
-                            <button class="btn btn-outline-danger custom-btn" type="submit">Cancel</button>
+                            <button class="btn btn-outline-danger custom-btn" type="submit"  id=" date-cancel">Cancel</button>
                         </div>
                     </div>
                 </div>
@@ -56,7 +56,7 @@
         <div class="col-xl-3 col-sm-6 col-12 mb-2 d-flex justify-content-center align-items-center">
             <form class="d-flex" role="search">
                 <input class="form-control me-2" id="searchfield" type="search" placeholder="Search" aria-label="Search">
-                <button class="btn btn-outline-danger custom-btn" type="submit">Cancel</button>
+                <button class="btn btn-outline-danger custom-btn " type="submit" id="cancel-button">Cancel</button>
             </form>
         </div>
     </div>
@@ -244,7 +244,47 @@
     }
     });
 
+    //cancel
+ 
+    document.addEventListener('DOMContentLoaded', function() {
+        const cancelButton = document.getElementById('cancel-button');
+        const cancelButton2 = document.getElementById('date-cancel');
+        const searchfield = document.getElementById('searchfield');
+        const tableoutput = document.querySelector('.table-output');
+        const appTable = document.querySelector('.app-table');
+        const enddate = document.getElementById('end_date'); // Corrected to getElementById
+        const startdate = document.getElementById('start_date'); // Corrected to getElementById
 
+        cancelButton.addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent default form submission (if inside a form)
+
+            // Clear search field
+            searchfield.value = '';
+
+            // Hide search results if visible
+            tableoutput.style.display = 'none';
+
+            // Show original table content
+            appTable.style.display = 'block';
+        });
+
+        cancelButton2.addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent default form submission (if inside a form)
+
+            // Clear start and end date fields
+            startdate.value = '';
+            enddate.value = '';
+
+            // Hide search results if visible
+            tableoutput.style.display = 'none';
+
+            // Show original table content
+            appTable.style.display = 'block';
+        });
+    });
 </script>
+
+
+
 
 {% endblock %}
