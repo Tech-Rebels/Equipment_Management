@@ -1,0 +1,51 @@
+{% load static %}
+{% load crispy_forms_tags %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="icon" href="{% static '/img/medequip2-icon.png' %}" type="image/icon">
+    <meta name="description" content="Login page for MedEquip" />
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="{% static '/Bootstrap/css/bootstrap.min.css' %}" />
+    <link rel="stylesheet" href="{% static '/Bootstrap/icons/font/bootstrap-icons.min.css' %}" />
+    <link rel="stylesheet" href="{% static '/multi/multi.css' %}" />
+
+
+    <!-- CSS -->
+    <link rel="stylesheet" type="text/css" href="{% static '/css/main.css' %}" />
+</head>
+
+<body class="bg-grey">
+    <!-- header -->
+    {% include 'partials/header.html' %}
+
+    <!-- login form -->
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6 offset-md-3">
+                <div class="border bg-white p-3 m-5">
+                    <h3>Login Page</h3>
+                    <form method="POST">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        <input class="btn btn-success" type="submit" value="Login">
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap script -->
+    <script src="{% static '/Bootstrap/js/bootstrap.min.js' %}"></script>
+    <script src="{% static '/jquery/jquery.js' %}"></script>
+    <script src="{% static '/multi/multi.js' %}"></script>
+
+</body>
+
+</html>

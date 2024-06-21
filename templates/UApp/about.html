@@ -1,0 +1,31 @@
+{% extends 'partials/base.html'%}
+{% block title %}About{% endblock %}
+{% block description %}about page{% endblock %}
+{% block content %}
+<!-- topbar -->
+<div class="d-flex justify-content-between flex-wrap flex-md nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">About</h1>
+     <div class="btn-toolbar mb-2 mb-md 0">
+        <!-- <div class="btn-group me-2">
+            <a href="{% url 'return-equipment' %}" class="btn btn-sm btn-outline-primary">- Return</a>
+            <a href="{% url 'borrow-equipment' %}" class="btn btn-sm btn-outline-success">+ Create</a>
+        </div> -->
+    </div>
+</div>
+
+<!-- for non admins -->
+<div class="container m-3 mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="alert alert-danger  alert-dismissible fade show" role="alert">
+                <h4 class="alert-heading">Caution!</h4>
+                <!-- <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button> -->
+                <p class="mb-0">This page is only for admins</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock  %}

@@ -1,0 +1,207 @@
+{% extends 'partials/base.html'%}
+{% load static %}
+{% block title %}Create{% endblock %}
+{% block description %}New equipment borrow{% endblock %}
+
+{% block content %}
+<!-- css -->
+<style>
+    #equipment_name {
+        display: none;
+    }
+
+    /* .mult-select-tag .btn-container{
+        background-color: #0d6efd !important;
+        color: #fff !important;
+    } */
+</style>
+
+<div class="d-flex justify-content-between flex-wrap flex-md nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Borrow Equipment</h1>
+    <div class="btn-toolbar mb-2 mb-md 0">
+        <div class="btn-group me-2">
+            <button id="rescanButton" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i>
+                Rescan</button>
+        </div>
+    </div>
+</div>
+
+<!-- messages -->
+{% include 'partials/messages.html'%}
+
+<!-- caution message -->
+<div id="borrowedItems" class="messages mt-1 position-absolute" style="top:8vh; left:40vw; display:none;">
+    <div class="alert alert-sm alert-danger alert-dismissible fade show" role="alert">
+        <h5>Student not returned some equipments</h5>
+        <h6>Borrowed Items:</h6>
+        <ul id="borrowedItemsList"></ul>
+        <a href="{% url 'dashboard-index' %}" class="btn btn-sm btn-primary">Cancel</a>
+        <button id="proceedButton" class="btn btn-sm btn-danger">Add-on</button>
+    </div>
+</div>
+
+<form action="{% url 'borrow-equipment' %}" method="POST">
+    {% csrf_token %}
+    <div class="row form-group mb-4">
+        <div class="col">
+            <label for="stuName">Student Name</label>
+            <input type="text" class="form-control" id="stuName" name="stuName" value="" placeholder="student name"
+                readonly required>
+            <br>
+            <label for="stuRegno">Student RegNo</label>
+            <input type="text" class="form-control" id="stuRegno" name="stuRegno" value="" placeholder="student regno"
+                readonly required>
+            <br>
+            <label for="CurrentDatetime">Current Date & Time</label>
+            <input type="datetime-local" class="form-control" id="CurrentDatetime" name="CurrentDatetime"
+                value="{{ current_datetime }}" readonly required>
+
+        </div>
+        <div class="col d-flex justify-content-center">
+            <img src="{% static '/img/medequip2-icon.png' %}" id="studentphoto" name="studentphoto" height="200px">
+        </div>
+    </div>
+
+    <div class="row form-group mb-2">
+        <div class="col">
+            <link rel="stylesheet" href="{% static '/select/css/multi-select-tag.css' %}" />
+            <script src="{% static '/select/js/multi-select-tag.js' %}"></script>
+            <label for="equipment_name">Select Equipment</label>
+
+            <div class="d-flex flex-row gap-2">
+                <select name="equipment[]" id="equipment_name" multiple required>
+                    <!-- Equipment options will be populated dynamically -->
+                </select>
+
+            </div>
+            <!-- <script>
+                new MultiSelectTag('equipment_name', {
+                    rounded: true,
+                    shadow: false,
+                    placeholder: 'Search',
+                })
+            </script> -->
+        </div>
+    </div>
+    <br>
+    <div class="form-group mb-4 ">
+        <a href="{% url 'dashboard-index' %}" class="btn btn-danger">Cancel</a>
+        <button id="submitButton" type="submit" class="btn btn-success">Submit</button>
+    </div>
+
+    <input type="text" id="rfidno" name="rfidno" value="" placeholder="rfid no" style="opacity: 0;" required>
+
+</form>
+
+
+<script>
+    $('.input-container').click(function () {
+        // Trigger click on the button
+        $('.btn-container button').click();
+    });
+
+
+    window.onload = function () {
+        document.getElementById('rfidno').focus();
+    };
+    document.getElementById('rescanButton').onclick = function () {
+        location.reload();
+        // var rfidInput = $('#rfidno');
+        // var nameInput = $('#stuName');
+        // var regnoInput = $('#stuRegno');
+        // rfidInput.val('');
+        // nameInput.val('');
+        // regnoInput.val('');
+        // $('#borrowedItems').hide();
+        // $('#submitButton').prop('disabled', false);
+        // rfidInput.focus();
+    };
+
+
+
+    $(document).ready(function () {
+
+        $('#rfidno').on('input', function () {
+            var rfidno = $(this).val();
+            if (rfidno) {
+                $.ajax({
+                    url: '{% url "get-student-details" %}',
+                    data: { 'rfidno': rfidno },
+                    dataType: 'json',
+                    success: function (data) {
+                        // console.log(data);  // Check the response here
+                        if (data.success) {
+                            $('#stuName').val(data.student.name);
+                            $('#stuRegno').val(data.student.regno);
+                            $('#studentphoto').attr('src', data.student.image_url);
+
+                            var borrowedItems = data.student.borrowed_items;
+                            var borrowedItemsList = $('#borrowedItemsList');
+                            borrowedItemsList.empty();
+                            var availableEquipment = data.student.available_equipment;
+
+                            // Populate the equipment dropdown
+                            var equipmentSelect = $('#equipment_name');
+                            equipmentSelect.empty();
+
+                            availableEquipment.forEach(function (equipment) {
+                                equipmentSelect.append('<option value="' + equipment + '">' + equipment + '</option>');
+                            });
+
+                            new MultiSelectTag('equipment_name', {
+                                rounded: true,
+                                shadow: false,
+                                placeholder: 'Search',
+                            });
+
+                            $('.input-container').click(function () {
+                                // Trigger click on the button
+                                $('.btn-container button').click();
+                            });
+
+
+
+                            if (borrowedItems.length > 0) {
+                                $('#borrowedItems').show();
+                                $('#submitButton').prop('disabled', true);
+                                borrowedItems.forEach(function (item) {
+                                    var borrowedAt = new Date(item.borrowed_at);
+                                    var hours = borrowedAt.getHours();
+                                    var minutes = borrowedAt.getMinutes().toString().padStart(2, '0');
+                                    var ampm = hours >= 12 ? 'PM' : 'AM';
+                                    hours = hours % 12;
+                                    hours = hours ? hours : 12; // the hour '0' should be '12'
+                                    var formattedTime = hours + ':' + minutes + ' ' + ampm;
+
+                                    var listItem = '<li>' + item.equipment__name + ' (Borrowed at: ' + formattedTime + ')</li>';
+                                    borrowedItemsList.append(listItem);
+                                });
+                            } else {
+                                $('#borrowedItems').hide();
+                                $('#submitButton').prop('disabled', false);
+                            }
+                        } else {
+                            alert(data.error);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error(xhr);
+                        alert('Error occurred. Please try again.');
+                    }
+                });
+            }
+        });
+
+        $('#proceedButton').click(function () {
+            // $('#borrowedItems').hide();
+            // $('#submitButton').prop('disabled', false);
+            if ($('#equipment_name option').length === 0) {
+                alert('No equipment available.');
+            } else {
+                $('#borrowedItems').hide();
+                $('#submitButton').prop('disabled', false);
+            }
+        });
+    });
+</script>
+{% endblock content %}

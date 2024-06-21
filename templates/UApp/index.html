@@ -1,0 +1,292 @@
+{% extends 'partials/base.html'%}
+{% block title %}MedEquip Dashboard{% endblock %}
+{% block description %}Dashboard for user to view Equipments detail{% endblock %}
+
+
+{% block content %}
+{% if user.is_authenticated and not user.is_staff %}
+<style>
+    .btn-lg-custom {
+        padding: 12px 27px;
+        font-size: 24px;
+    }
+</style>
+<!-- topbar -->
+<div class="d-flex justify-content-between flex-wrap flex-md nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Dashboard</h1>
+    <div class="btn-toolbar mb-2 mb-md 0">
+        <div class="btn-group me-2">
+            <a href="{% url 'return-equipment' %}" class="btn btn-lg btn-outline-primary btn-lg-custom">- Return</a>
+            <a href="{% url 'borrow-equipment' %}" class="btn btn-lg btn-outline-success btn-lg-custom">+ Create</a>
+        </div>
+    </div>
+    <h1 class="opacity-0" style="pointer-events: none;">Dashboard</h1>
+</div>
+
+<!-- messages -->
+{% include 'partials/messages.html'%}
+
+<!-- cards -->
+<div class="row g-6 mb-6">
+    <div class="col-xl-3 col-sm-6 col-12 mb-2">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col">
+                        <span class="h6 font-semibold text-muted text-sm d-block mb-2">Total Equipment</span>
+                        <span class="h3 font-bold mb-0">
+                            <!-- total count --> {{total_equipment_count}}
+                        </span>
+                    </div>
+                    <div class="col-auto d-flex align-items-center justify-content-center">
+                        <div class="icon icon-shape bg-success text-white text-lg rounded-circle d-flex align-items-center justify-content-center"
+                            style="width: 50px; height: 50px;">
+                            <!-- <i class="bi bi-capsule" style="scale: 1.6;"></i> -->
+                            <i class="fa-solid fa-syringe" style="scale: 1.6;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 col-12 mb-2">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col">
+                        <span class="h6 font-semibold text-muted text-sm d-block mb-2">Equipment taken</span>
+                        <span class="h3 font-bold mb-0">
+                            {{borrowed_count}}
+                        </span>
+                    </div>
+                    <div class="col-auto d-flex align-items-center justify-content-center">
+                        <div class="icon icon-shape bg-danger text-white text-lg rounded-circle d-flex align-items-center justify-content-center"
+                            style="width: 50px; height: 50px;">
+                            <i class="bi bi-x-octagon-fill" style="scale: 1.6;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 col-12 mb-2">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col">
+                        <span class="h6 font-semibold text-muted text-sm d-block mb-2">Equipment returned</span>
+                        <span class="h3 font-bold mb-0">
+                            {{returned_count}}
+                        </span>
+                    </div>
+                    <div class="col-auto d-flex align-items-center justify-content-center">
+                        <div class="icon icon-shape bg-warning text-white text-lg rounded-circle d-flex align-items-center justify-content-center"
+                            style="width: 50px; height: 50px;">
+                            <i class="bi bi-exclamation-triangle-fill" style="scale: 1.6;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 col-12 mb-2">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col">
+                        <span class="h6 font-semibold text-muted text-sm d-block mb-2">Equipment Pending</span>
+                        <span class="h3 font-bold mb-0">
+                            {{not_returned_count}}
+                        </span>
+                    </div>
+                    <div class="col-auto d-flex align-items-center justify-content-center">
+                        <div class="icon icon-shape bg-warning text-white text-lg rounded-circle d-flex align-items-center justify-content-center"
+                            style="width: 50px; height: 50px;">
+                            <i class="bi bi-exclamation-triangle-fill" style="scale: 1.6;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- <div class="col-xl-3 col-sm-6 col-12 mb-2">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <div class="col">
+                    <form action="/" method="POST">
+                        <div class="row form-group">
+                            <div class="col">
+                                <label for="sortby" class="h6 font-semibold text-muted text-sm d-block mb-1">Sort
+                                    by</label>
+                                <div class="d-flex flex-row gap-2">
+                                    <select class="form-select mr-1" name="sortby" id="sortby">
+                                        <option value="regNumber" selected>Register Number</option>
+                                        <option value="insExpDate">Insurance</option>
+                                        <option value="homeTaxExpDate">Home Tax</option>
+                                        <option value="fcExpDate">FC</option>
+                                        <option value="npExpDate">NP</option>
+                                    </select>
+                                    <button type="submit"
+                                        class="btn btn-sm border border-secondary-subtle btn-hover">GO</button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </form>
+                </div>
+                <div class="row">
+                <div class="col">
+                    <span class="h6 font-semibold text-muted text-sm d-block mb-2">Card Name</span>
+                    <span class="h3 font-bold mb-0">--</span>
+                </div>
+                <div class="col-auto d-flex align-items-center justify-content-center">
+                    <div class="icon icon-shape bg-primary text-white text-lg rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                      <i class="bi bi-bus-front" style="scale: 1.6;"></i>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+    </div> -->
+</div>
+
+<!-- Table data view -->
+<div class="card shadow-sm border-0 p-3 pb-0 mt-1">
+    <div class="table-responsive">
+        {% if items %}
+        <table class="table table-hover table-sm">
+            <thead>
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Reg.No.</th>
+                    <th scope="col">Equipment</th>
+                    <th scope="col">Borrow Time</th>
+                    <th scope="col">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr class="align-middle">
+                    <td>
+                        {{item.student.name}}
+                    </td>
+                    <td>
+                        {{item.student.regno}}
+                    </td>
+                    <td>
+                        {% for equipment in item.equipment.all %}
+                        {{ equipment.name }}
+                        {% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {{item.borrowed_at}}
+                    </td>
+                    <td class="{% if item.status %}text-success{% else %}text-danger{% endif %}">
+                        {% if item.status %}
+                        Returned
+                        {% else %}
+                        Not Returned
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="alert alert-warning" role="alert">
+            No transaction happened today.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- pagination -->
+{% include 'partials/pagination.html'%}
+
+{% else %}
+
+<!-- for admins -->
+<style>
+    .lab-card {
+        margin-bottom: 25px;
+        width: 25%;
+        /* 20% - 5cards */
+    }
+
+    .card {
+        transition: ease-in-out 0.2s;
+    }
+
+    .card:hover {
+        box-shadow: 0px 0px 10px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 110px;
+    }
+
+    .btn-group {
+        width: 100%;
+    }
+
+    .btn-group .btn {
+        flex: 1;
+    }
+
+    .plus-card .card-body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .plus-card a {
+        display: block;
+        width: 100%;
+        height: 100%;
+        text-decoration: none;
+        color: inherit;
+    }
+</style>
+
+<!-- topbar -->
+<div class="d-flex justify-content-between flex-wrap flex-md nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Admin Dashboard</h1>
+    <div class="btn-toolbar mb-2 mb-md 0">
+        <!-- <div class="btn-group me-2">
+            <a href="{% url 'return-equipment' %}" class="btn btn-sm btn-outline-primary">- Return</a>
+            <a href="{% url 'borrow-equipment' %}" class="btn btn-sm btn-outline-success">+ Create</a>
+        </div> -->
+    </div>
+</div>
+
+<!-- messages -->
+{% include 'partials/messages.html'%}
+
+
+<div class="container mt-5">
+    <div class="row ">
+        {% if users.count %}
+        {% for user in users %}
+        <div class="lab-card">
+            <a href="{% url 'admin-dashboard' user.pk %}" class="text-decoration-none">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">{{user.username}}</h4>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+    </div>
+</div>
+
+
+{% endif %}
+{% endblock content %}

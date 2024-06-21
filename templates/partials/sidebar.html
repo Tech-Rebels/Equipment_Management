@@ -1,0 +1,64 @@
+<nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-white sidebar collapse">
+    <div class="position-sticky pt-3 sidebar-sticky">
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="{% url 'dashboard-index' %}">
+            <i class="bi bi-house"></i>
+            <!-- <i class="fa-solid fa-house"></i> -->
+            Dashboard
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/about">
+            <i class="bi bi-patch-question"></i>
+            <!-- <i class="fa-regular fa-circle-question"></i> -->
+            About
+          </a>
+        </li>
+        {% if user.is_authenticated and not user.is_staff %}
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'history' %}">
+            <i class="bi bi-clock-history"></i>
+            <!-- <i class="fa-regular fa-clock"></i> -->
+            History
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'equipments-list' %}">
+            <i class="bi bi-plus-circle"></i>
+            <!-- <i class="fa-solid fa-stethoscope"></i> -->
+            Equipments
+          </a>
+        </li>
+        {% elif user.is_authenticated and user.is_staff %}
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'admin-history' %}">
+            <i class="bi bi-clock-history"></i>
+            <!-- <i class="fa-regular fa-clock"></i> -->
+            History
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'students-list' %}">
+            <i class="bi bi-backpack2"></i>
+            <!-- <i class="bi bi-backpack2-fill"></i> -->
+            Students
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'users-list' %}">
+            <i class="bi bi-person"></i>
+            Labs
+          </a>
+        </li>
+        {% endif %}
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'settings' %}">
+            <i class="bi bi-gear"></i>
+            <!-- <i class="fa-solid fa-gear"></i> -->
+            Settings
+          </a>
+        </li>
+      </ul>
+    </div>
+  </nav>

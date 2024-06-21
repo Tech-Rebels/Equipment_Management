@@ -1,0 +1,154 @@
+{% extends 'partials/base.html'%}
+{% load static %}
+{% block title %}Return{% endblock %}
+{% block description %}Return borrowed equipment{% endblock %}
+
+{% block content %}
+<!-- top bar -->
+<div class="d-flex justify-content-between flex-wrap flex-md nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Return Equipment</h1>
+    <div class="btn-toolbar mb-2 mb-md 0">
+        <div class="btn-group me-2">
+            <button id="rescanButton" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i> Rescan</button>
+        </div>
+    </div>
+</div>
+
+<!-- messages -->
+{% include 'partials/messages.html'%}
+
+<!-- return form -->
+<form id="returnForm" action="{% url 'return-equipment' %}" method="POST">
+    {% csrf_token %}
+    <div class="row form-group mb-4">
+        <div class="col">
+            <label for="stuName">Student Name</label>
+            <input type="text" class="form-control" id="stuName" name="stuName" value="" placeholder="student name" readonly required>
+            <br>
+            <label for="stuRegno">Student RegNo</label>
+            <input type="text" class="form-control" id="stuRegno" name="stuRegno" value="" placeholder="student regno" readonly required>
+            <br>
+            <label for="CurrentDatetime">Current Date & Time</label>
+            <input type="datetime-local" class="form-control" id="CurrentDatetime" name="CurrentDatetime" value="{{ current_datetime }}" readonly required>
+        </div>
+        <div class="col d-flex justify-content-center">
+            <img src="{% static '/img/medequip2-icon.png' %}" id="studentphoto" name="studentphoto" height="200px">
+        </div>
+    </div>
+
+    <div class="row form-group mb-2">
+        <div class="col">
+            <!-- borrowed list -->
+            <div id="borrowedItems" class="card shadow-sm border-0 p-3 pb-0 mt-1" style="display:none;">
+                <div class="table-responsive">
+                    <h6>Borrowed Items:</h6>
+                    <table class="table table-hover table-sm" id="borrowed-list">
+                        <thead>
+                            <tr>
+                                <th scope="col">Equipment</th>
+                                <th scope="col">Borrowed time</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br>
+    <div class="form-group mb-4">
+        <a href="{% url 'dashboard-index' %}" class="btn btn-danger">Cancel</a>
+        <button id="submitButton" type="submit" class="btn btn-success">Submit</button>
+    </div>
+
+    <input type="text" id="rfidno" name="rfidno" value="" placeholder="rfid no" style="opacity: 0;" required>
+
+</form>
+
+<script>
+    $('.input-container').click(function () {
+        $('.btn-container button').click();
+    });
+
+    window.onload = function () {
+        document.getElementById('rfidno').focus();
+    };
+
+    document.getElementById('rescanButton').onclick = function () {
+        var rfidInput = $('#rfidno');
+        var nameInput = $('#stuName');
+        var regnoInput = $('#stuRegno');
+        rfidInput.val('');
+        nameInput.val('');
+        regnoInput.val('');
+        $('#borrowedItems').hide();
+        $('#submitButton').prop('disabled', false);
+        rfidInput.focus();
+    };
+
+    $(document).ready(function () {
+        $('#rfidno').on('input', function () {
+            var rfidno = $(this).val();
+
+            if (!/^\d+$/.test(rfidno) || rfidno.length > 20) {
+                alert('Invalid RFID, Scan again!');
+                $(this).val('');
+                $(this).focus();
+                return;
+            }
+
+            if (rfidno) {
+                $.ajax({
+                    url: '{% url "get-student-details" %}',
+                    data: { 'rfidno': rfidno },
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data.success) {
+                            $('#stuName').val(data.student.name);
+                            $('#stuRegno').val(data.student.regno);
+                            $('#studentphoto').attr('src', data.student.image_url);
+
+                            var borrowedItems = data.student.borrowed_items;
+                            var tbody = $('#borrowedItems tbody');
+                            tbody.empty();
+                            if (borrowedItems.length > 0) {
+                                $('#borrowedItems').show();
+                                $('#submitButton').prop('disabled', false);
+                                borrowedItems.forEach(function (item) {
+                                    var borrowedAt = new Date(item.borrowed_at);
+                                    var hours = borrowedAt.getHours();
+                                    var minutes = borrowedAt.getMinutes().toString().padStart(2, '0');
+                                    var ampm = hours >= 12 ? 'PM' : 'AM';
+                                    hours = hours % 12;
+                                    hours = hours ? hours : 12;
+                                    var formattedTime = hours + ':' + minutes + ' ' + ampm;
+
+                                    var row = $('<tr class="align-middle"></tr>');
+                                    var equipmentCell = $('<td></td>').text(item.equipment__name);
+                                    var timeCell = $('<td></td>').text(formattedTime);
+
+                                    row.append(equipmentCell, timeCell);
+                                    tbody.append(row);
+                                });
+                            } else {
+                                $('#borrowedItems').show();
+                                $('#submitButton').prop('disabled', true);
+                                var noItemsRow = $('<tr class="align-middle"></tr>');
+                                var noItemsCell = $('<td colspan="2"></td>').text('No equipment to return.');
+                                noItemsRow.append(noItemsCell);
+                                tbody.append(noItemsRow);
+                            }
+                        } else {
+                            alert(data.error);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        alert('Error occurred. Please try again.');
+                    }
+                });
+            }
+        });
+    });
+</script>
+
+{% endblock content %}

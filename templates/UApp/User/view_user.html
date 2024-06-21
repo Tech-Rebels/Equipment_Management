@@ -1,0 +1,45 @@
+{% extends 'partials/base.html'%}
+{% load static %}
+{% load crispy_forms_tags %}
+{% block title %}View Lab{% endblock %}
+{% block description %}viewing User {% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Viewing : {{ lab.username }}</h1>
+    <!-- <div class="btn-toolbar mb-2 mb-md 0">
+        <div class="btn-group me-2">
+            <a href="" class="btn btn-sm btn-outline-secondary">Share</a>
+            <a href="" class="btn btn-sm btn-outline-secondary">Export</a>
+        </div>
+    </div> -->
+</div>
+
+<ul class="list-group">
+    <li class="list-group-item">
+        <div class="row">
+            <div class="col" style="max-width: 150px;"><b>Username: </b></div>
+            <div class="col">{{ lab.username }}</div>
+        </div>
+    </li>
+    <li class="list-group-item">
+        <div class="row">
+            <div class="col" style="max-width: 150px;"><b>No of Equipments: </b></div>
+            <div class="col">{{ equipment_count }}</div>
+        </div>
+    </li>
+    <li class="list-group-item">
+        <div class="row">
+            <div class="col" style="max-width: 150px;"><b>Total Equipments: </b></div>
+            <div class="col">{{ total_equipment_count }}</div>
+        </div>
+    </li>
+    <li class="list-group-item">
+        <div class="row">
+            <div class="col" style="max-width: 150px;"><b>Total Available Equipments: </b></div>
+            <div class="col">{{ total_available_equipment_count }}</div>
+        </div>
+    </li>
+    
+</ul>
+{% endblock content %}
