@@ -19,7 +19,7 @@ class Student(models.Model):
 class Equipment(models.Model):
     lab = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     name = models.CharField(max_length=100, null=True)
-    # idno = models.CharField(max_length=100, null=True, blank=True)
+    order = models.IntegerField(null=True, blank=True)
     count = models.IntegerField()
     available_count = models.IntegerField(null=True, blank=True)
     category = models.CharField(max_length=100, null=True, blank=True)

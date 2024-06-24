@@ -6,6 +6,7 @@
 {% block content %}
 
 <!-- csrf -->
+
 <head>
     <meta name="csrf-token" content="{{ csrf_token }}">
 </head>
@@ -35,9 +36,9 @@
             <thead>
                 <tr>
                     <th scope="col">Name</th>
-                    <!-- <th scope="col">ID no.</th> -->
                     <th scope="col">Total Count</th>
                     <th scope="col">Available Count</th>
+                    <th scope="col">Order</th>
                     <th scope="col">Category</th>
                     <!-- <th scope="col">Availability</th> -->
                     <th scope="col" class="text-end">Action</th>
@@ -55,6 +56,13 @@
                     </td>
                     <td>
                         {{item.available_count}}
+                    </td>
+                    <td>
+                        {% if item.order != null %}
+                        {{item.order}}
+                        {% else %}
+                        ---
+                        {% endif %}
                     </td>
                     <td>
                         {{item.category}}
@@ -81,7 +89,8 @@
         <h5 class="mb-3">No equipment is there in lab</h5>
         {% endif %}
     </div>
-    
+
+    <!-- search table -->
     <div class="table-output" style="display: none;">
         <table class="table table-hover table-sm">
             <thead>
@@ -90,6 +99,7 @@
                     <!-- <th scope="col">ID no.</th> -->
                     <th scope="col">Total Count</th>
                     <th scope="col">Available Count</th>
+                    <th scope="col">Order</th>
                     <th scope="col">Category</th>
                     <!-- <th scope="col">Availability</th> -->
                     <th scope="col" class="text-end">Action</th>
@@ -197,6 +207,7 @@
                             <td>${item.name}</td>
                             <td>${item.count}</td>
                             <td>${item.available_count}</td>
+                            <td>${item.order ? item.order : '---'}</td>
                             <td>${item.category}</td>
                             <td class="text-end">
                                 <div class="d-flex flex-row justify-content-end gap-2">
