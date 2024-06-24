@@ -20,7 +20,7 @@
     </form>
     <div class="btn-toolbar mb-2 mb-md 0">
         <div class="btn-group me-2">
-            <a href="{% url 'add-equipment' %}" class="btn btn-sm btn-outline-success">+ Create</a>
+            <a href="{% url 'add-equipment' %}" class="btn btn-sm btn-outline-success">+ Add&nbsp;</a>
         </div>
     </div>
 </div>
@@ -70,7 +70,7 @@
                     <td class="text-end">
                         <div class="d-flex flex-row justify-content-end gap-2">
                             <a href="{% url 'edit-equipment' item.pk %}" type="button"
-                                class="btn btn-warning btn-small">
+                                class="btn btn-primary btn-small">
                                 <i class="bi bi-pencil"></i>
                             </a>
                             <form id="delete-form-{{ item.pk }}" action="{% url 'delete-equipment' item.pk %}"
@@ -211,7 +211,7 @@
                             <td>${item.category}</td>
                             <td class="text-end">
                                 <div class="d-flex flex-row justify-content-end gap-2">
-                                    <a href="/equipment/edit/${item.id}" type="button" class="btn btn-warning btn-small">
+                                    <a href="/equipment/edit/${item.id}" type="button" class="btn btn-primary btn-small">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     <form id="delete-form-${item.id}" action="/equipment/delete/${item.id}/" method="post" class="position-relative">
