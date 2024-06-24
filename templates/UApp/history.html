@@ -37,8 +37,7 @@
                     </select>
                 </div>
                 <div class="col-md-2 d-flex align-items-center justify-content-center">
-                    <button class="btn btn-outline-danger custom-btn" type="submit"
-                        id="reset-filter">Reset</button>
+                    <button class="btn btn-outline-danger custom-btn" type="submit" id="reset-filter">Reset</button>
                     <!-- <div class="form-check">
                         <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault">
                         <label class="form-check-label" for="flexCheckDefault">
@@ -125,95 +124,95 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-    const searchfield = document.querySelector("#searchfield");
-    const fromDateField = document.querySelector("#fromDate");
-    const toDateField = document.querySelector("#toDate");
-    const resetFilterButton = document.querySelector("#reset-filter");
-    const tableoutput = document.querySelector(".table-output");
-    const apptable = document.querySelector(".app-table");
-    const page = document.querySelector(".page");
-    const searchResults = document.querySelector("#search-results");
-    const returnStatusSelect = document.querySelector("#dropdownSelect");
+        const searchfield = document.querySelector("#searchfield");
+        const fromDateField = document.querySelector("#fromDate");
+        const toDateField = document.querySelector("#toDate");
+        const resetFilterButton = document.querySelector("#reset-filter");
+        const tableoutput = document.querySelector(".table-output");
+        const apptable = document.querySelector(".app-table");
+        const page = document.querySelector(".page");
+        const searchResults = document.querySelector("#search-results");
+        const returnStatusSelect = document.querySelector("#dropdownSelect");
 
-    function formatDateTime(dateTimeStr) {
-        const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-        const date = new Date(dateTimeStr);
-        return date.toLocaleDateString(undefined, options);
-    }
+        function formatDateTime(dateTimeStr) {
+            const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            const date = new Date(dateTimeStr);
+            return date.toLocaleDateString(undefined, options);
+        }
 
-    function performSearch() {
-        const searchValue = searchfield.value.trim();
-        const fromDate = fromDateField.value;
-        const toDate = toDateField.value;
-        const returnStatus = returnStatusSelect.value;
+        function performSearch() {
+            const searchValue = searchfield.value.trim();
+            const fromDate = fromDateField.value;
+            const toDate = toDateField.value;
+            const returnStatus = returnStatusSelect.value;
 
-        if (searchValue.length > 0 || fromDate.length > 0 || toDate.length > 0 || returnStatus !== 'all') {
-            fetch("{% url 'search-history' %}", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": "{{ csrf_token }}",
-                },
-                body: JSON.stringify({
-                    searchText: searchValue,
-                    fromDate: fromDate,
-                    toDate: toDate,
-                    returnStatus: returnStatus,
-                }),
-            })
-                .then((res) => res.json())
-                .then((data) => {
-                    apptable.style.display = "none";
-                    page.style.display = "none";
-                    tableoutput.style.display = "block";
-                    searchResults.innerHTML = "";
+            if (searchValue.length > 0 || fromDate.length > 0 || toDate.length > 0 || returnStatus !== 'all') {
+                fetch("{% url 'search-history' %}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": "{{ csrf_token }}",
+                    },
+                    body: JSON.stringify({
+                        searchText: searchValue,
+                        fromDate: fromDate,
+                        toDate: toDate,
+                        returnStatus: returnStatus,
+                    }),
+                })
+                    .then((res) => res.json())
+                    .then((data) => {
+                        apptable.style.display = "none";
+                        page.style.display = "none";
+                        tableoutput.style.display = "block";
+                        searchResults.innerHTML = "";
 
-                    if (data.length === 0) {
-                        searchResults.innerHTML = "<tr><td colspan='6'>No result found</td></tr>";
-                    } else {
-                        data.forEach((item) => {
-                            const formattedBorrowedAt = formatDateTime(item.borrowed_at);
-                            const formattedReturnedAt = item.returned_at ? formatDateTime(item.returned_at) : 'Not Returned';
+                        if (data.length === 0) {
+                            searchResults.innerHTML = "<tr><td colspan='6'>No result found</td></tr>";
+                        } else {
+                            data.forEach((item) => {
+                                const formattedBorrowedAt = formatDateTime(item.borrowed_at);
+                                const formattedReturnedAt = item.returned_at ? formatDateTime(item.returned_at) : 'Not Returned';
 
-                            searchResults.innerHTML += `
+                                searchResults.innerHTML += `
                             <tr class="align-middle">
                                 <td>${item.student__name}</td>
                                 <td>${item.student__regno}</td>
                                 <td>${item.equipment__name}</td>
                                 <td>${formattedBorrowedAt}</td>
                                 <td>${formattedReturnedAt}</td>
-                                <td class="${item.status? 'text-success' : 'text-danger'}">${item.status ? 'Returned' : 'Not Returned'}</td>
+                                <td class="${item.status ? 'text-success' : 'text-danger'}">${item.status ? 'Returned' : 'Not Returned'}</td>
                             </tr>`;
-                        });
-                    }
-                });
-        } else {
-            tableoutput.style.display = "none";
-            apptable.style.display = "block";
-            page.style.display = "block";
+                            });
+                        }
+                    });
+            } else {
+                tableoutput.style.display = "none";
+                apptable.style.display = "block";
+                page.style.display = "block";
+            }
         }
-    }
 
-    searchfield.addEventListener("keyup", performSearch);
-    fromDateField.addEventListener("change", performSearch);
-    toDateField.addEventListener("change", performSearch);
-    returnStatusSelect.addEventListener("change", performSearch);
+        searchfield.addEventListener("keyup", performSearch);
+        fromDateField.addEventListener("change", performSearch);
+        toDateField.addEventListener("change", performSearch);
+        returnStatusSelect.addEventListener("change", performSearch);
 
-    resetFilterButton.addEventListener("click", (e) => {
-        e.preventDefault();
-        searchfield.value = '';
-        fromDateField.value = '';
-        toDateField.value = '';
-        returnStatusSelect.value = 'all';
+        resetFilterButton.addEventListener("click", (e) => {
+            e.preventDefault();
+            searchfield.value = '';
+            fromDateField.value = '';
+            toDateField.value = '';
+            returnStatusSelect.value = 'all';
 
-        // Hide search results if visible
-        tableoutput.style.display = 'none';
+            // Hide search results if visible
+            tableoutput.style.display = 'none';
 
-        // Show original table content
-        apptable.style.display = 'block';
-        page.style.display = 'block';
+            // Show original table content
+            apptable.style.display = 'block';
+            page.style.display = 'block';
+        });
     });
-});
 
 
 </script>

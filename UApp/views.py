@@ -11,7 +11,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.db.models import Count, Sum, Q, F, Max, BooleanField, Case, When, Value, CharField
-from django.db.models.functions import Concat
+from django.db.models.functions import Concat, Coalesce
 from django.db import transaction as db_transaction
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
@@ -398,7 +398,7 @@ def get_student_details(request):
             borrowed_equipment_names = Equipment.objects.filter(id__in=borrowed_equipment_ids).values_list('name', flat=True)
 
             # Get the available equipment that is not already borrowed by the student
-            available_equipment = Equipment.objects.filter(lab=request.user, available_count__gt=0).exclude(id__in=borrowed_equipment_ids).values_list('name', flat=True)
+            available_equipment = Equipment.objects.filter(lab=request.user, available_count__gt=0).exclude(id__in=borrowed_equipment_ids).order_by(Coalesce('order', Value(float('inf'))).asc()).values_list('name', flat=True)
 
             student_data = {
                 'name': student.name,
