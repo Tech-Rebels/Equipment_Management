@@ -20,10 +20,10 @@ class UserEditForm(UserChangeForm):
 class AddEquipmentForm(forms.ModelForm):
     class Meta:
         model = Equipment
-        fields = ['name', 'count', 'category']
+        fields = ['name', 'count', 'order', 'category']
 
 class EquipmentForm(forms.ModelForm):
     class Meta:
         model = Equipment
-        fields = ['name', 'count', 'category']
+        fields = ['name', 'count', 'order', 'category']
 

@@ -6,6 +6,7 @@
 {% block content %}
 
 <!-- csrf -->
+
 <head>
     <meta name="csrf-token" content="{{ csrf_token }}">
 </head>
@@ -19,7 +20,7 @@
     </form>
     <div class="btn-toolbar mb-2 mb-md 0">
         <div class="btn-group me-2">
-            <a href="{% url 'add-equipment' %}" class="btn btn-sm btn-outline-success">+ Create</a>
+            <a href="{% url 'add-equipment' %}" class="btn btn-sm btn-outline-success">+ Add&nbsp;</a>
         </div>
     </div>
 </div>
@@ -35,9 +36,9 @@
             <thead>
                 <tr>
                     <th scope="col">Name</th>
-                    <!-- <th scope="col">ID no.</th> -->
                     <th scope="col">Total Count</th>
                     <th scope="col">Available Count</th>
+                    <th scope="col">Order</th>
                     <th scope="col">Category</th>
                     <!-- <th scope="col">Availability</th> -->
                     <th scope="col" class="text-end">Action</th>
@@ -57,12 +58,19 @@
                         {{item.available_count}}
                     </td>
                     <td>
+                        {% if item.order != null %}
+                        {{item.order}}
+                        {% else %}
+                        ---
+                        {% endif %}
+                    </td>
+                    <td>
                         {{item.category}}
                     </td>
                     <td class="text-end">
                         <div class="d-flex flex-row justify-content-end gap-2">
                             <a href="{% url 'edit-equipment' item.pk %}" type="button"
-                                class="btn btn-warning btn-small">
+                                class="btn btn-primary btn-small">
                                 <i class="bi bi-pencil"></i>
                             </a>
                             <form id="delete-form-{{ item.pk }}" action="{% url 'delete-equipment' item.pk %}"
@@ -81,7 +89,8 @@
         <h5 class="mb-3">No equipment is there in lab</h5>
         {% endif %}
     </div>
-    
+
+    <!-- search table -->
     <div class="table-output" style="display: none;">
         <table class="table table-hover table-sm">
             <thead>
@@ -90,6 +99,7 @@
                     <!-- <th scope="col">ID no.</th> -->
                     <th scope="col">Total Count</th>
                     <th scope="col">Available Count</th>
+                    <th scope="col">Order</th>
                     <th scope="col">Category</th>
                     <!-- <th scope="col">Availability</th> -->
                     <th scope="col" class="text-end">Action</th>
@@ -197,10 +207,11 @@
                             <td>${item.name}</td>
                             <td>${item.count}</td>
                             <td>${item.available_count}</td>
+                            <td>${item.order ? item.order : '---'}</td>
                             <td>${item.category}</td>
                             <td class="text-end">
                                 <div class="d-flex flex-row justify-content-end gap-2">
-                                    <a href="/equipment/edit/${item.id}" type="button" class="btn btn-warning btn-small">
+                                    <a href="/equipment/edit/${item.id}" type="button" class="btn btn-primary btn-small">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     <form id="delete-form-${item.id}" action="/equipment/delete/${item.id}/" method="post" class="position-relative">
