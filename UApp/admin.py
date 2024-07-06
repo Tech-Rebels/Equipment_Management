@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import Student, Equipment, Transaction
 
 
-admin.site.site_header = 'MedEquip Admin Dashboard'
+admin.site.site_header = 'DIMS Admin Dashboard'
 
 # class TransactionAdmin(admin.ModelAdmin):
 #     list_display = ('handled_by','student', 'equipment', 'Date','borrowed_time','returned_at', 'return_status')

@@ -7,10 +7,11 @@ class Student(models.Model):
     regno = models.CharField(max_length=100, unique=True)
     name = models.CharField(max_length=100)
     image = models.ImageField(default='avatar.png', upload_to='Student_Images')
+    dob = models.DateField(null=True, blank=True)
     email = models.EmailField(unique=True, null=True, blank=True)
     phone = models.CharField(max_length=10, null=True, blank=True)
-    department = models.CharField(max_length=100, null=True)
-    course = models.CharField(max_length=100, null=True)
+    # department = models.CharField(max_length=100, null=True)
+    # course = models.CharField(max_length=100, null=True)
     year = models.IntegerField(null=True)
 
     def __str__(self):

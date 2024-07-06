@@ -81,6 +81,63 @@
     </div>
 </div>
 
+
+<form method="post" class="d-flex justify-content-center mt-5" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="file" name="file" id="fileUpload" style="display: none;">
+    <button class="btn btn-success" type="submit" id="uploadButton" style="display: none;">Upload File</button>
+</form>
+
+
+<!-- upload instruction -->
+<div class="container mt-5">
+    <div class="card mb-3">
+        <div class="card-header">
+            <h5 class="card-title">Upload Instructions</h5>
+        </div>
+        <div class="card-body">
+            <h6>Required Columns:</h6>
+            <ul>
+                <li><strong>rfidno</strong> - RFID Number (unique)</li>
+                <li><strong>regno</strong> - Registration Number (unique)</li>
+                <li><strong>name</strong> - Student Name</li>
+                <li><strong>email</strong> - Email Address (unique, optional)</li>
+                <li><strong>phone</strong> - Phone Number (optional)</li>
+                <li><strong>dob</strong> - Date of Birth (optional)</li>
+                <li><strong>year</strong> - Year of Study (optional)</li>
+            </ul>
+            <p>Please ensure that the Excel file has the above column names and the data is correctly filled in the
+                respective columns. Columns not mentioned above will be ignored.</p>
+            <p>Example Excel Format:</p>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>rfidno</th>
+                        <th>regno</th>
+                        <th>name</th>
+                        <th>email</th>
+                        <th>phone</th>
+                        <th>dob</th>
+                        <th>year</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>3963695027</td>
+                        <td>2021001</td>
+                        <td>Vinoth</td>
+                        <td>vinoth@vk.com</td>
+                        <td>1234567890</td>
+                        <td>2004-03-27</td>
+                        <td>2</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- table useless -->
 <div class="card shadow-sm border-0 p-3 pb-0 mt-1" style="display: none;">
     <div class="table-responsive app-table">
         <table class="table table-hover table-sm">
@@ -103,11 +160,6 @@
     </div>
 </div>
 
-<form method="post" class="d-flex justify-content-center mt-5" enctype="multipart/form-data">
-    {% csrf_token %}
-    <input type="file" name="file" id="fileUpload" style="display: none;">
-    <button class="btn btn-success" type="submit" id="uploadButton" style="display: none;">Upload File</button>
-</form>
 
 <!-- js -->
 <script>
@@ -160,7 +212,7 @@
             "application/vnd.ms-excel.sheet.binary.macroEnabled.12"
         ];
         if (validExtensions.includes(fileType)) {
-            let iconURL = "{% static '/img/xlsx_icon.png' %}"; 
+            let iconURL = "{% static '/img/xlsx_icon.png' %}";
             let fileName = file.name;
             let fileTag = `<img src="${iconURL}" alt="icon" style="width:50px;height:50px;margin-bottom:10px;"><p>${fileName}</p>`;
             dropArea.innerHTML = fileTag;

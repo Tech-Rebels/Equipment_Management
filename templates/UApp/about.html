@@ -5,7 +5,7 @@
 <!-- topbar -->
 <div class="d-flex justify-content-between flex-wrap flex-md nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">About</h1>
-     <div class="btn-toolbar mb-2 mb-md 0">
+    <div class="btn-toolbar mb-2 mb-md 0">
         <!-- <div class="btn-group me-2">
             <a href="{% url 'return-equipment' %}" class="btn btn-sm btn-outline-primary">- Return</a>
             <a href="{% url 'borrow-equipment' %}" class="btn btn-sm btn-outline-success">+ Create</a>
@@ -13,19 +13,42 @@
     </div>
 </div>
 
-<!-- for non admins -->
-<div class="container m-3 mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="alert alert-danger  alert-dismissible fade show" role="alert">
-                <h4 class="alert-heading">Caution!</h4>
-                <!-- <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button> -->
-                <p class="mb-0">This page is only for admins</p>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Dental Instrument Management Software</h5>
+                    <p class="card-text">
+                        Welcome to DIMS, a comprehensive solution designed to streamline the management of dental
+                        instruments in educational institutions.
+                        DIMS facilitates easy tracking of equipment lending, ensuring that all transactions are recorded
+                        efficiently and accurately.
+                    </p>
+                    <p class="card-text">
+                        Key features of DIMS include:
+                    <ul>
+                        <li>RFID-based tracking of student borrowings</li>
+                        <li>Real-time inventory management</li>
+                        <li>Detailed transaction history</li>
+                        <li>Admin and employee roles for streamlined operations</li>
+                    </ul>
+                    </p>
+                    <p class="card-text">
+                        Our goal is to improve the efficiency and accountability of equipment management, allowing
+                        students and staff to focus more on learning and teaching.
+                    </p>
+                    <p class="card-text">
+                        Thank you for choosing DIMS - Dental Instrument Management Software.
+                    </p>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-{% endblock  %}
+
+
+{% endblock %}

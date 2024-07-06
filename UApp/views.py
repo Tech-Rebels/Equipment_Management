@@ -527,8 +527,9 @@ def Add_Student(request):
             name=request.POST.get('studentName'),
             email=request.POST.get('studentemail'),
             phone=request.POST.get('studentphoneno'),
-            department=request.POST.get('department'),
-            course=request.POST.get('course'),
+            dob=request.POST.get('dob'),
+            # department=request.POST.get('department'),
+            # course=request.POST.get('course'),
             year=request.POST.get('studentyear'),
             image=request.FILES.get(
                 'studentphoto') if 'studentphoto' in request.FILES else 'avatar.png'
@@ -548,7 +549,6 @@ def Upload_Students(request):
         # pip install xlrd
         # pip install openpyxl
 
-
         uploaded_count = 0
         failed_count = 0
 
@@ -560,8 +560,9 @@ def Upload_Students(request):
                     name=row['name'],
                     email=row['email'],
                     phone=row['phone'],
-                    department=row['department'],
-                    course=row['course'],
+                    dob=row['dob'],
+                    # department=row['department'],
+                    # course=row['course'],
                     year=row['year']
                 )
                 uploaded_count += 1
@@ -586,8 +587,9 @@ def Edit_Student(request, pk):
         student.name = request.POST.get('studentName')
         student.email = request.POST.get('studentemail')
         student.phone = request.POST.get('studentphoneno')
-        student.department = request.POST.get('department')
-        student.course = request.POST.get('course')
+        student.dob=request.POST.get('dob')
+        # student.department = request.POST.get('department')
+        # student.course = request.POST.get('course')
         student.year = request.POST.get('studentyear')
         student.image = request.FILES.get(
             'studentphoto') if 'studentphoto' in request.FILES else student.image
@@ -614,8 +616,7 @@ def Search_Student(request):
         search_str = json.loads(request.body).get('searchText', '')
         students = Student.objects.filter(name__icontains=search_str) | \
                    Student.objects.filter(regno__icontains=search_str) | \
-                   Student.objects.filter(department__icontains=search_str) | \
-                   Student.objects.filter(course__icontains=search_str) | \
+                   Student.objects.filter(email__icontains=search_str) | \
                    Student.objects.filter(year__istartswith=search_str)
         data = list(students.values())
         return JsonResponse(data, safe=False)
