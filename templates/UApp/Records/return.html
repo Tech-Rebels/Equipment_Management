@@ -9,7 +9,8 @@
     <h1 class="h2">Return Equipment</h1>
     <div class="btn-toolbar mb-2 mb-md 0">
         <div class="btn-group me-2">
-            <button id="rescanButton" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i> Rescan</button>
+            <button id="rescanButton" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i>
+                Rescan</button>
         </div>
     </div>
 </div>
@@ -23,13 +24,16 @@
     <div class="row form-group mb-4">
         <div class="col">
             <label for="stuName">Student Name</label>
-            <input type="text" class="form-control" id="stuName" name="stuName" value="" placeholder="student name" readonly required>
+            <input type="text" class="form-control" id="stuName" name="stuName" value="" placeholder="student name"
+                readonly required>
             <br>
             <label for="stuRegno">Student RegNo</label>
-            <input type="text" class="form-control" id="stuRegno" name="stuRegno" value="" placeholder="student regno" readonly required>
+            <input type="text" class="form-control" id="stuRegno" name="stuRegno" value="" placeholder="student regno"
+                readonly required>
             <br>
             <label for="CurrentDatetime">Current Date & Time</label>
-            <input type="datetime-local" class="form-control" id="CurrentDatetime" name="CurrentDatetime" value="{{ current_datetime }}" readonly required>
+            <input type="datetime-local" class="form-control" id="CurrentDatetime" name="CurrentDatetime"
+                value="{{ current_datetime }}" readonly required>
         </div>
         <div class="col d-flex justify-content-center">
             <img src="{% static '/img/medequip2-icon.png' %}" id="studentphoto" name="studentphoto" height="200px">
@@ -61,20 +65,87 @@
         <button id="submitButton" type="submit" class="btn btn-success">Submit</button>
     </div>
 
-    <input type="text" id="rfidno" name="rfidno" value="" placeholder="rfid no" style="opacity: 0;" required>
+    <input type="text" id="rfidno" name="rfidno" value="" placeholder="rfid no" style="opacity: 0;" >
 
 </form>
 
 <script>
-    $('.input-container').click(function () {
-        $('.btn-container button').click();
-    });
+    // Debounce function to limit the rate at which a function can fire
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            const context = this;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(context, args), wait);
+        };
+    }
 
-    window.onload = function () {
-        document.getElementById('rfidno').focus();
-    };
+    function requestStudentDetails() {
+        var rfidno = $('#rfidno').val();
 
-    document.getElementById('rescanButton').onclick = function () {
+        if (!/^\d+$/.test(rfidno) || rfidno.length > 20) {
+            alert('Invalid RFID, Scan again!');
+            $('#rfidno').val('').focus();
+            return;
+        }
+
+        if (rfidno) {
+            $.ajax({
+                url: '{% url "get-student-details" %}',
+                data: { 'rfidno': rfidno },
+                dataType: 'json',
+                success: function (data) {
+                    if (data.success) {
+                        $('#stuName').val(data.student.name);
+                        $('#stuRegno').val(data.student.regno);
+                        $('#studentphoto').attr('src', data.student.image_url);
+
+                        var borrowedItems = data.student.borrowed_items;
+                        var tbody = $('#borrowedItems tbody');
+                        tbody.empty();
+                        if (borrowedItems.length > 0) {
+                            $('#borrowedItems').show();
+                            $('#submitButton').prop('disabled', false);
+                            borrowedItems.forEach(function (item) {
+                                var borrowedAt = new Date(item.borrowed_at);
+                                var hours = borrowedAt.getHours();
+                                var minutes = borrowedAt.getMinutes().toString().padStart(2, '0');
+                                var ampm = hours >= 12 ? 'PM' : 'AM';
+                                hours = hours % 12;
+                                hours = hours ? hours : 12;
+                                var formattedTime = hours + ':' + minutes + ' ' + ampm;
+
+                                var row = $('<tr class="align-middle"></tr>');
+                                var equipmentCell = $('<td></td>').text(item.equipment__name);
+                                var timeCell = $('<td></td>').text(formattedTime);
+
+                                row.append(equipmentCell, timeCell);
+                                tbody.append(row);
+                            });
+                        } else {
+                            $('#borrowedItems').show();
+                            $('#submitButton').prop('disabled', true);
+                            var noItemsRow = $('<tr class="align-middle"></tr>');
+                            var noItemsCell = $('<td colspan="2"></td>').text('No equipment to return.');
+                            noItemsRow.append(noItemsCell);
+                            tbody.append(noItemsRow);
+                        }
+                    } else {
+                        alert(data.error);
+                        resetForm();
+                    }
+                },
+                error: function (xhr, status, error) {
+                    alert('Error occurred. Please try again.');
+                }
+            });
+        }
+    }
+
+    // Debounce the request function with a delay of 300ms
+    var debouncedRequestStudentDetails = debounce(requestStudentDetails, 300);
+
+    function resetForm() {
         var rfidInput = $('#rfidno');
         var nameInput = $('#stuName');
         var regnoInput = $('#stuRegno');
@@ -84,70 +155,65 @@
         $('#borrowedItems').hide();
         $('#submitButton').prop('disabled', false);
         rfidInput.focus();
-    };
+    }
+
+    // Event listener for paste event
+    document.addEventListener('paste', function(event) {
+        var rfidInput = document.getElementById('rfidno');
+        if (rfidInput.value.trim() === '') {
+            var clipboardData = event.clipboardData || window.clipboardData;
+            var pastedText = clipboardData.getData('Text');
+            rfidInput.value = pastedText;
+            $(rfidInput).trigger('input');
+            event.preventDefault();
+        }
+    });
 
     $(document).ready(function () {
-        $('#rfidno').on('input', function () {
-            var rfidno = $(this).val();
 
-            if (!/^\d+$/.test(rfidno) || rfidno.length > 20) {
-                alert('Invalid RFID, Scan again!');
-                $(this).val('');
-                $(this).focus();
-                return;
-            }
+        var rfidBuffer = '';
+        var rfidTimeout;
 
-            if (rfidno) {
-                $.ajax({
-                    url: '{% url "get-student-details" %}',
-                    data: { 'rfidno': rfidno },
-                    dataType: 'json',
-                    success: function (data) {
-                        if (data.success) {
-                            $('#stuName').val(data.student.name);
-                            $('#stuRegno').val(data.student.regno);
-                            $('#studentphoto').attr('src', data.student.image_url);
-
-                            var borrowedItems = data.student.borrowed_items;
-                            var tbody = $('#borrowedItems tbody');
-                            tbody.empty();
-                            if (borrowedItems.length > 0) {
-                                $('#borrowedItems').show();
-                                $('#submitButton').prop('disabled', false);
-                                borrowedItems.forEach(function (item) {
-                                    var borrowedAt = new Date(item.borrowed_at);
-                                    var hours = borrowedAt.getHours();
-                                    var minutes = borrowedAt.getMinutes().toString().padStart(2, '0');
-                                    var ampm = hours >= 12 ? 'PM' : 'AM';
-                                    hours = hours % 12;
-                                    hours = hours ? hours : 12;
-                                    var formattedTime = hours + ':' + minutes + ' ' + ampm;
-
-                                    var row = $('<tr class="align-middle"></tr>');
-                                    var equipmentCell = $('<td></td>').text(item.equipment__name);
-                                    var timeCell = $('<td></td>').text(formattedTime);
-
-                                    row.append(equipmentCell, timeCell);
-                                    tbody.append(row);
-                                });
-                            } else {
-                                $('#borrowedItems').show();
-                                $('#submitButton').prop('disabled', true);
-                                var noItemsRow = $('<tr class="align-middle"></tr>');
-                                var noItemsCell = $('<td colspan="2"></td>').text('No equipment to return.');
-                                noItemsRow.append(noItemsCell);
-                                tbody.append(noItemsRow);
-                            }
-                        } else {
-                            alert(data.error);
-                        }
-                    },
-                    error: function (xhr, status, error) {
-                        alert('Error occurred. Please try again.');
+        // Global keydown event listener
+        document.addEventListener('keydown', function(event) {
+            // Check if the key is a number
+            if (event.key >= '0' && event.key <= '9') {
+                rfidBuffer += event.key;
+                clearTimeout(rfidTimeout);
+                rfidTimeout = setTimeout(function() {
+                    if (rfidBuffer.length > 0) {
+                        $('#rfidno').val(rfidBuffer);
+                        $('#rfidno').trigger('input');
+                        rfidBuffer = '';
                     }
-                });
+                }, 200); // Adjust the delay as needed
             }
         });
+
+        $('#rfidno').on('input', function () {
+            debouncedRequestStudentDetails();
+        });
+
+        $('#proceedButton').click(function () {
+            if ($('#equipment_name option').length === 0) {
+                alert('No equipment available.');
+            } else {
+                $('#borrowedItems').hide();
+                $('#submitButton').prop('disabled', false);
+            }
+        });
+
+        $('.input-container').click(function () {
+            $('.btn-container button').click();
+        });
+
+        window.onload = function () {
+            document.getElementById('rfidno').focus();
+        };
+
+        document.getElementById('rescanButton').onclick = function () {
+            resetForm();
+        };
     });
 </script>
 

@@ -89,112 +89,149 @@
         <button id="submitButton" type="submit" class="btn btn-success">Submit</button>
     </div>
 
-    <input type="text" id="rfidno" name="rfidno" value="" placeholder="rfid no" style="opacity: 0;" required>
+    <input type="text" id="rfidno" name="rfidno" value="" placeholder="rfid no" style="opacity: 0;">
 
 </form>
 
 
 <script>
-    $('.input-container').click(function () {
-        // Trigger click on the button
-        $('.btn-container button').click();
+    // Debounce function to limit the rate at which a function can fire
+    function debounce(func, wait) {
+        let timeout;
+        return function (...args) {
+            const context = this;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(context, args), wait);
+        };
+    }
+
+    // Function to request student details
+    function requestStudentDetails() {
+        var rfidno = $('#rfidno').val();
+        if (!/^\d+$/.test(rfidno) || rfidno.length > 20) {
+            alert('Invalid RFID, Scan again!');
+            $('#rfidno').val('').focus();
+            return;
+        }
+        if (rfidno) {
+            $.ajax({
+                url: '{% url "get-student-details" %}',
+                data: { 'rfidno': rfidno },
+                dataType: 'json',
+                success: function (data) {
+                    if (data.success) {
+                        $('#stuName').val(data.student.name);
+                        $('#stuRegno').val(data.student.regno);
+                        $('#studentphoto').attr('src', data.student.image_url);
+
+                        var borrowedItems = data.student.borrowed_items;
+                        var borrowedItemsList = $('#borrowedItemsList');
+                        borrowedItemsList.empty();
+                        var availableEquipment = data.student.available_equipment;
+
+                        // Populate the equipment dropdown
+                        var equipmentSelect = $('#equipment_name');
+                        equipmentSelect.empty();
+
+                        availableEquipment.forEach(function (equipment) {
+                            equipmentSelect.append('<option value="' + equipment + '">' + equipment + '</option>');
+                        });
+
+                        new MultiSelectTag('equipment_name', {
+                            rounded: true,
+                            shadow: false,
+                            placeholder: 'Search',
+                        });
+
+                        $('.input-container').click(function () {
+                            $('.btn-container button').click();
+                        });
+
+                        if (borrowedItems.length > 0) {
+                            $('#borrowedItems').show();
+                            $('#submitButton').prop('disabled', true);
+                            borrowedItems.forEach(function (item) {
+                                var borrowedAt = new Date(item.borrowed_at);
+                                var hours = borrowedAt.getHours();
+                                var minutes = borrowedAt.getMinutes().toString().padStart(2, '0');
+                                var ampm = hours >= 12 ? 'PM' : 'AM';
+                                hours = hours % 12;
+                                hours = hours ? hours : 12; // the hour '0' should be '12'
+                                var formattedTime = hours + ':' + minutes + ' ' + ampm;
+
+                                var listItem = '<li>' + item.equipment__name + ' (Borrowed at: ' + formattedTime + ')</li>';
+                                borrowedItemsList.append(listItem);
+                            });
+                        } else {
+                            $('#borrowedItems').hide();
+                            $('#submitButton').prop('disabled', false);
+                        }
+                    } else {
+                        alert(data.error);
+                        resetForm();
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error(xhr);
+                    alert('Error occurred. Please try again.');
+                }
+            });
+        }
+    }
+
+    // Debounce the request function with a delay of 200ms
+    var debouncedRequestStudentDetails = debounce(requestStudentDetails, 200);
+
+    function resetForm() {
+        var rfidInput = $('#rfidno');
+        var nameInput = $('#stuName');
+        var regnoInput = $('#stuRegno');
+        rfidInput.val('');
+        nameInput.val('');
+        regnoInput.val('');
+        $('#borrowedItems').hide();
+        $('#submitButton').prop('disabled', false);
+        rfidInput.focus();
+    }
+
+    // Event listener for paste event
+    document.addEventListener('paste', function (event) {
+        var rfidInput = document.getElementById('rfidno');
+        if (rfidInput.value.trim() === '') {
+            var clipboardData = event.clipboardData || window.clipboardData;
+            var pastedText = clipboardData.getData('Text');
+            rfidInput.value = pastedText;
+            $(rfidInput).trigger('input');
+            event.preventDefault();
+        }
     });
 
-
-    window.onload = function () {
-        document.getElementById('rfidno').focus();
-    };
-    document.getElementById('rescanButton').onclick = function () {
-        location.reload();
-        // var rfidInput = $('#rfidno');
-        // var nameInput = $('#stuName');
-        // var regnoInput = $('#stuRegno');
-        // rfidInput.val('');
-        // nameInput.val('');
-        // regnoInput.val('');
-        // $('#borrowedItems').hide();
-        // $('#submitButton').prop('disabled', false);
-        // rfidInput.focus();
-    };
-
-
-
     $(document).ready(function () {
+        // Initialize global variables for capturing RFID input
+        var rfidBuffer = '';
+        var rfidTimeout;
 
-        $('#rfidno').on('input', function () {
-            var rfidno = $(this).val();
-            if (rfidno) {
-                $.ajax({
-                    url: '{% url "get-student-details" %}',
-                    data: { 'rfidno': rfidno },
-                    dataType: 'json',
-                    success: function (data) {
-                        // console.log(data);  // Check the response here
-                        if (data.success) {
-                            $('#stuName').val(data.student.name);
-                            $('#stuRegno').val(data.student.regno);
-                            $('#studentphoto').attr('src', data.student.image_url);
-
-                            var borrowedItems = data.student.borrowed_items;
-                            var borrowedItemsList = $('#borrowedItemsList');
-                            borrowedItemsList.empty();
-                            var availableEquipment = data.student.available_equipment;
-
-                            // Populate the equipment dropdown
-                            var equipmentSelect = $('#equipment_name');
-                            equipmentSelect.empty();
-
-                            availableEquipment.forEach(function (equipment) {
-                                equipmentSelect.append('<option value="' + equipment + '">' + equipment + '</option>');
-                            });
-
-                            new MultiSelectTag('equipment_name', {
-                                rounded: true,
-                                shadow: false,
-                                placeholder: 'Search',
-                            });
-
-                            $('.input-container').click(function () {
-                                // Trigger click on the button
-                                $('.btn-container button').click();
-                            });
-
-
-
-                            if (borrowedItems.length > 0) {
-                                $('#borrowedItems').show();
-                                $('#submitButton').prop('disabled', true);
-                                borrowedItems.forEach(function (item) {
-                                    var borrowedAt = new Date(item.borrowed_at);
-                                    var hours = borrowedAt.getHours();
-                                    var minutes = borrowedAt.getMinutes().toString().padStart(2, '0');
-                                    var ampm = hours >= 12 ? 'PM' : 'AM';
-                                    hours = hours % 12;
-                                    hours = hours ? hours : 12; // the hour '0' should be '12'
-                                    var formattedTime = hours + ':' + minutes + ' ' + ampm;
-
-                                    var listItem = '<li>' + item.equipment__name + ' (Borrowed at: ' + formattedTime + ')</li>';
-                                    borrowedItemsList.append(listItem);
-                                });
-                            } else {
-                                $('#borrowedItems').hide();
-                                $('#submitButton').prop('disabled', false);
-                            }
-                        } else {
-                            alert(data.error);
-                        }
-                    },
-                    error: function (xhr, status, error) {
-                        console.error(xhr);
-                        alert('Error occurred. Please try again.');
+        // Global keydown event listener
+        document.addEventListener('keydown', function(event) {
+            // Check if the key is a number
+            if (event.key >= '0' && event.key <= '9') {
+                rfidBuffer += event.key;
+                clearTimeout(rfidTimeout);
+                rfidTimeout = setTimeout(function() {
+                    if (rfidBuffer.length > 0) {
+                        $('#rfidno').val(rfidBuffer);
+                        $('#rfidno').trigger('input');
+                        rfidBuffer = '';
                     }
-                });
+                }, 200); // Adjust the delay as needed
             }
         });
 
+        $('#rfidno').on('input', function () {
+            debouncedRequestStudentDetails();
+        });
+
         $('#proceedButton').click(function () {
-            // $('#borrowedItems').hide();
-            // $('#submitButton').prop('disabled', false);
             if ($('#equipment_name option').length === 0) {
                 alert('No equipment available.');
             } else {
@@ -202,6 +239,21 @@
                 $('#submitButton').prop('disabled', false);
             }
         });
+
+        $('.input-container').click(function () {
+            $('.btn-container button').click();
+        });
+
+        window.onload = function () {
+            document.getElementById('rfidno').focus();
+        };
+
+        document.getElementById('rescanButton').onclick = function () {
+            resetForm();
+        };
     });
+
+    
 </script>
+
 {% endblock content %}
