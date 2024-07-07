@@ -108,6 +108,11 @@
     // Function to request student details
     function requestStudentDetails() {
         var rfidno = $('#rfidno').val();
+
+        if (!/^\d+$/.test(rfidno) || rfidno.length < 5) {
+            $('#rfidno').val('').focus();
+            return;
+        }
         if (!/^\d+$/.test(rfidno) || rfidno.length > 20) {
             alert('Invalid RFID, Scan again!');
             $('#rfidno').val('').focus();
@@ -249,7 +254,8 @@
         };
 
         document.getElementById('rescanButton').onclick = function () {
-            resetForm();
+            // resetForm();
+            location.reload();
         };
     });
 

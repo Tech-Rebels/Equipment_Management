@@ -65,7 +65,8 @@
         <button id="submitButton" type="submit" class="btn btn-success">Submit</button>
     </div>
 
-    <input type="text" id="rfidno" name="rfidno" value="" placeholder="rfid no" style="opacity: 0;" >
+    <input type="text" id="rfidno" name="rfidno" value="" placeholder="rfid no" style="opacity: 0;" required
+        oninvalid="this.setCustomValidity('First scan the RFID tag')" oninput="this.setCustomValidity('')">
 
 </form>
 
@@ -73,7 +74,7 @@
     // Debounce function to limit the rate at which a function can fire
     function debounce(func, wait) {
         let timeout;
-        return function(...args) {
+        return function (...args) {
             const context = this;
             clearTimeout(timeout);
             timeout = setTimeout(() => func.apply(context, args), wait);
@@ -83,6 +84,10 @@
     function requestStudentDetails() {
         var rfidno = $('#rfidno').val();
 
+        if (!/^\d+$/.test(rfidno) || rfidno.length < 5) {
+            $('#rfidno').val('').focus();
+            return;
+        }
         if (!/^\d+$/.test(rfidno) || rfidno.length > 20) {
             alert('Invalid RFID, Scan again!');
             $('#rfidno').val('').focus();
@@ -158,7 +163,7 @@
     }
 
     // Event listener for paste event
-    document.addEventListener('paste', function(event) {
+    document.addEventListener('paste', function (event) {
         var rfidInput = document.getElementById('rfidno');
         if (rfidInput.value.trim() === '') {
             var clipboardData = event.clipboardData || window.clipboardData;
@@ -175,12 +180,12 @@
         var rfidTimeout;
 
         // Global keydown event listener
-        document.addEventListener('keydown', function(event) {
+        document.addEventListener('keydown', function (event) {
             // Check if the key is a number
             if (event.key >= '0' && event.key <= '9') {
                 rfidBuffer += event.key;
                 clearTimeout(rfidTimeout);
-                rfidTimeout = setTimeout(function() {
+                rfidTimeout = setTimeout(function () {
                     if (rfidBuffer.length > 0) {
                         $('#rfidno').val(rfidBuffer);
                         $('#rfidno').trigger('input');
