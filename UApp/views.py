@@ -1,5 +1,6 @@
 import json
 import pandas as pd
+import openpyxl
 from datetime import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
@@ -281,6 +282,54 @@ def admin_history_filter(request):
             })
 
         return JsonResponse(data, safe=False)
+
+@login_required
+def export_history(request):
+    from_date = request.GET.get('fromDate')
+    to_date = request.GET.get('toDate')
+    lab = request.GET.get('lab', 'all')
+
+    # Filter transactions based on the provided filters
+    transactions = Transaction.objects.all()
+
+    if from_date:
+        transactions = transactions.filter(borrowed_at__date__gte=from_date)
+    if to_date:
+        transactions = transactions.filter(borrowed_at__date__lte=to_date)
+    if lab != 'all':
+        transactions = transactions.filter(handled_by__username=lab)
+
+    # Create a workbook and sheet
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Transaction History'
+
+    # Write the header
+    headers = ['Lab', 'Name', 'Reg.No.', 'Equipment', 'Borrow Time', 'Return Time', 'Status']
+    ws.append(headers)
+
+    # Write the data
+    for transaction in transactions:
+        equipment_names = ', '.join(equipment.name for equipment in transaction.equipment.all())
+        ws.append([
+            transaction.handled_by.username if transaction.handled_by else '',
+            transaction.student.name,
+            transaction.student.regno,
+            equipment_names,
+            transaction.borrowed_at.strftime('%Y-%m-%d %H:%M:%S'),
+            transaction.returned_at.strftime('%Y-%m-%d %H:%M:%S') if transaction.returned_at else 'Not Returned',
+            'Returned' if transaction.status else 'Not Returned'
+        ])
+
+    # Prepare the response
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = f'attachment; filename=DIMS_transaction_history_{timezone.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+    wb.save(response)
+
+    return response
+
 
 
 #

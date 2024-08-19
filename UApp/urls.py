@@ -18,6 +18,7 @@ urlpatterns = [
 
     path('admin-history/', views.Admin_History, name='admin-history'),
     path('admin-search-history/', views.admin_history_filter, name='admin-search-history'),
+    path('export-history/', views.export_history, name='export-history'),
 
     path('create/', views.Borrow_Equipment, name='borrow-equipment'),
     path('return/', views.Return_Equipment, name='return-equipment'),
