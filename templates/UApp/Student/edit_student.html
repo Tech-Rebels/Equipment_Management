@@ -130,11 +130,11 @@
     <div class="row form-group mb-4">
         <div class="col">
             <label for="dob">DOB</label>
-            <input type="date" class="form-control" id="dob" name="dob" value="" placeholder="dob">
+            <input type="date" class="form-control" id="dob" name="dob" value="{{ student.dob|date:'Y-m-d' }}" placeholder="dob">
         </div>
         <div class="col">
             <label for="studentyear">Year</label>
-            <input type="number" class="form-control" id="studentyear" name="studentyear" value="{{ student.year }}"
+            <input type="text" class="form-control" id="studentyear" name="studentyear" value="{{ student.year }}"
                 placeholder="year">
         </div>
     </div>

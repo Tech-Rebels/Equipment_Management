@@ -1,6 +1,7 @@
 import json
 import pandas as pd
 import openpyxl
+import logging
 from datetime import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
@@ -9,6 +10,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.views.decorators.csrf import csrf_exempt
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.db.models import Count, Sum, Q, F, Max, BooleanField, Case, When, Value, CharField
@@ -20,6 +22,8 @@ from django.contrib.auth.models import User
 from .forms import CreateUserForm, UserEditForm, AddEquipmentForm, EquipmentForm
 from .models import Equipment, Student, Transaction
 
+# Set up logging
+logger = logging.getLogger(__name__)
 
 # 
 # check fn - user or admin 
@@ -550,7 +554,7 @@ def Search_Equipment(request):
 # Students
 @user_passes_test_custom(is_admin, 'dashboard-index')
 def StudentList(request):
-    students_list = Student.objects.all()
+    students_list = Student.objects.all().order_by('id')
     no_of_items = 10
     paginator = Paginator(students_list, no_of_items)
     page = request.GET.get('page')
@@ -570,73 +574,134 @@ def StudentList(request):
 @user_passes_test_custom(is_admin, 'dashboard-index')
 def Add_Student(request):
     if request.method == 'POST':
-        student = Student(
-            rfidno=request.POST.get('rfidno'),
-            regno=request.POST.get('regno'),
-            name=request.POST.get('studentName'),
-            email=request.POST.get('studentemail'),
-            phone=request.POST.get('studentphoneno'),
-            dob=request.POST.get('dob'),
-            # department=request.POST.get('department'),
-            # course=request.POST.get('course'),
-            year=request.POST.get('studentyear'),
-            image=request.FILES.get(
-                'studentphoto') if 'studentphoto' in request.FILES else 'avatar.png'
-        )
-        student.save()
-        messages.success(request, 'Student added successfully!')
+        rfidno = request.POST.get('rfidno', '')
+        regno = request.POST.get('regno', '')
+        name = request.POST.get('studentName', '')
+        email = request.POST.get('studentemail', '')
+        phone = request.POST.get('studentphoneno', '')
+        dob = request.POST.get('dob', '')
+        year = request.POST.get('studentyear', '')
+
+        # Handle date format and conversion
+        if dob:
+            dob = parse_date(dob)
+            if not dob:
+                messages.error(request, 'Invalid date format. Ensure it is in YYYY-MM-DD format.')
+                return redirect('add-student')
+
+        image = request.FILES.get('studentphoto', 'avatar.png')
+
+        try:
+            student = Student(
+                rfidno=rfidno,
+                regno=regno,
+                name=name,
+                email=email,
+                phone=phone,
+                dob=dob if dob else None,  # Set to None if dob is empty
+                year=year,
+                image=image
+            )
+            student.save()
+            messages.success(request, 'Student added successfully!')
+        except ValidationError as e:
+            logger.error(f"Validation error: {e}")
+            messages.error(request, f'Validation error: {str(e)}')
+        except Exception as e:
+            logger.error(f"Error saving student: {e}")
+            messages.error(request, f'Failed to add student: {str(e)}')
+        
         return redirect('students-list')
+
     return render(request, 'UApp/Student/add_student.html')
+
 
 @user_passes_test_custom(is_admin, 'dashboard-index')
 def Upload_Students(request):
     if request.method == 'POST' and request.FILES.get('file'):
         file = request.FILES['file']
-        df = pd.read_excel(file)
-        # pip install odfpy
-        # pip install pyxlsb
-        # pip install xlrd
-        # pip install openpyxl
+
+        try:
+            df = pd.read_excel(file, dtype=str)
+        except Exception as e:
+            logger.error(f"Error reading file: {str(e)}")
+            messages.error(request, 'Failed to read the file. Please ensure it is a valid Excel file.')
+            return redirect('upload-student')
+
+        df.columns = df.columns.str.strip().str.lower()
+
+        required_columns = {'rfidno', 'regno', 'name'}
+        missing_columns = required_columns - set(df.columns)
+
+        if missing_columns:
+            messages.error(request, f"Missing columns in the file: {', '.join(missing_columns)}")
+            return redirect('upload-student')
+        
 
         uploaded_count = 0
         failed_count = 0
+        invalid_rows = []
 
         for index, row in df.iterrows():
             try:
+                dob = row.get('dob', None)
+                if pd.notna(dob):
+                    try:
+                        dob = pd.to_datetime(dob, dayfirst=True).date() 
+                    except ValueError:
+                        dob = None 
+                email = row.get('email', None) if pd.notna(row.get('email', None)) else None
+                phone = row.get('phone', None) if pd.notna(row.get('phone', None)) else None
+                year = row.get('year', None) if pd.notna(row.get('year', None)) else None
+
                 Student.objects.create(
-                    rfidno=row['rfidno'],
-                    regno=row['regno'],
-                    name=row['name'],
-                    email=row['email'],
-                    phone=row['phone'],
-                    dob=row['dob'],
-                    # department=row['department'],
-                    # course=row['course'],
-                    year=row['year']
+                    rfidno=row.get('rfidno', None),
+                    regno=row.get('regno', None),
+                    name=row.get('name', None),
+                    email=email,
+                    phone=phone,
+                    dob=dob,
+                    year=year
                 )
                 uploaded_count += 1
             except Exception as e:
+                logger.error(f"Error processing row {index + 1}: {str(e)}")
                 failed_count += 1
+                invalid_rows.append(index + 1) 
 
         if uploaded_count > 0:
             messages.success(request, f"{uploaded_count} records uploaded successfully.")
         if failed_count > 0:
-            messages.error(request, f"{failed_count} records failed to upload.")
+            if invalid_rows:
+                messages.error(request, f"{failed_count} records failed to upload. Rows with errors: {', '.join(map(str, invalid_rows))}.")
+            else:
+                messages.error(request, f"{failed_count} records failed to upload. Please check the file for errors.")
+        if uploaded_count == 0 and failed_count > 0:
+            messages.error(request, "No records were uploaded due to errors in the file.")
 
-        return HttpResponseRedirect('/students')
+        return redirect('students-list')
 
     return render(request, 'UApp/Student/upload_student.html')
 
 @user_passes_test_custom(is_admin, 'dashboard-index')
 def Edit_Student(request, pk):
     student = get_object_or_404(Student, pk=pk)
+    # print('Date of Birth:', student.dob)
     if request.method == 'POST':
         student.rfidno = request.POST.get('rfidno')
         student.regno = request.POST.get('regno')
         student.name = request.POST.get('studentName')
         student.email = request.POST.get('studentemail')
         student.phone = request.POST.get('studentphoneno')
-        student.dob=request.POST.get('dob')
+        # student.dob=request.POST.get('dob', None)
+        dob = request.POST.get('dob', None)
+        if dob:
+            try:
+                student.dob = pd.to_datetime(dob, format='%Y-%m-%d').date()  # Ensure format matches input
+            except ValueError:
+                student.dob = None
+        else:
+            student.dob = None
         # student.department = request.POST.get('department')
         # student.course = request.POST.get('course')
         student.year = request.POST.get('studentyear')
@@ -666,7 +731,7 @@ def Search_Student(request):
         students = Student.objects.filter(name__icontains=search_str) | \
                    Student.objects.filter(regno__icontains=search_str) | \
                    Student.objects.filter(email__icontains=search_str) | \
-                   Student.objects.filter(year__istartswith=search_str)
+                   Student.objects.filter(year__icontains=search_str)
         data = list(students.values())
         return JsonResponse(data, safe=False)
 
