@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Student, Equipment, Transaction
+from .models import Student, Equipment, Transaction, MedicalKit
 
 
 admin.site.site_header = 'DIMS Admin Dashboard'
@@ -18,6 +18,7 @@ admin.site.site_header = 'DIMS Admin Dashboard'
 # Register your models here.
 admin.site.register(Student)
 admin.site.register(Equipment)
+admin.site.register(MedicalKit)
 # admin.site.register(Transaction, TransactionAdmin)
 admin.site.register(Transaction)
 

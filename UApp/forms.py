@@ -1,5 +1,5 @@
 from django import forms
-from .models import Equipment, Student
+from .models import Equipment, Student, MedicalKit
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 
@@ -27,3 +27,7 @@ class EquipmentForm(forms.ModelForm):
         model = Equipment
         fields = ['name', 'count', 'order', 'category']
 
+class AddMedicalKitForm(forms.ModelForm):
+    class Meta:
+        model = MedicalKit
+        fields = ['kitName', 'equipment', 'order']

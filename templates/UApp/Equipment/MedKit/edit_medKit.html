@@ -1,0 +1,65 @@
+{% extends 'partials/base.html'%}
+{% load static %}
+{% load crispy_forms_tags %}
+{% block title %}Edit Medical Kit{% endblock %}
+{% block description %}Edit medical kit details {% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Edit Medical Kit</h1>
+</div>
+<div class="container">
+    <div class="row">
+        <form method="POST">
+            {% csrf_token %}
+            <div class="col">
+                <!-- Kit Name -->
+                <label for="medKitName">Medical Kit Name</label>
+                <input type="text" class="form-control" id="medKitName" name="medKitName" value="{{ medical_kit.kitName }}" placeholder="medical kit name" required>
+                <br>
+
+                <!-- Multi-select for equipment -->
+                <link rel="stylesheet" href="{% static '/select/css/multi-select-tag.css' %}" />
+                <script src="{% static '/select/js/multi-select-tag.js' %}"></script>
+                <label for="equipment_name">Select Equipment</label>
+                <select name="equipment[]" id="equipment_name" multiple required>
+                    {% for item in items %}
+                        <option value="{{ item.id }}" {% if item.id in selected_equipment_ids %}selected{% endif %}>{{ item.name }}</option>
+                    {% endfor %}
+                </select>
+                <script>
+                    new MultiSelectTag('equipment_name', {
+                        rounded: true,
+                        shadow: false,
+                        placeholder: 'Search',
+                    })
+                </script>
+                <br>
+
+                <!-- Order Field (can be blank) -->
+                <label for="order">Order</label>
+                <input type="number" class="form-control" id="order" name="order" value="{{ medical_kit.order|date:'Y-m-d\TH:i' }}">
+            </div>
+
+            <br>
+            <!-- Submit and cancel buttons -->
+            <div class="form-group mb-4 pt-2">
+                <a href="{% url 'equipments-list' %}" class="btn btn-danger">Cancel</a>
+                <button type="submit" class="btn btn-success">Update</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputContainer = document.querySelector('.input-container');
+        const button = document.querySelector('.btn-container button');
+        
+        inputContainer.addEventListener('click', function() {
+            button.click();
+        });
+    });
+</script>
+
+{% endblock content %}

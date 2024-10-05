@@ -73,14 +73,9 @@
             <tbody>
                 {% for item in items %}
                 <tr class="align-middle">
-                    <td>{{ item.student.name }}</td>
-                    <td>{{ item.student.regno }}</td>
-                    <td>
-                        {% for equipment in item.equipment.all %}
-                        {{ equipment.name }}
-                        {% if not forloop.last %}, {% endif %}
-                        {% endfor %}
-                    </td>
+                    <td>{{ item.studentName }}</td>
+                    <td>{{ item.studentRegno }}</td>
+                    <td>{{ item.equipmentName }}</td>
                     <td>{{ item.borrowed_at }}</td>
                     <td>{{ item.returned_at }}</td>
                     <td class="{% if item.status %}text-success{% else %}text-danger{% endif %}">

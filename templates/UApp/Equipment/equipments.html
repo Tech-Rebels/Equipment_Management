@@ -20,7 +20,8 @@
     </form>
     <div class="btn-toolbar mb-2 mb-md 0">
         <div class="btn-group me-2">
-            <a href="{% url 'add-equipment' %}" class="btn btn-sm btn-outline-success">+ Add&nbsp;</a>
+            <a href="{% url 'add-medicalKit' %}" class="btn btn-sm btn-outline-primary">+ Add Medical Kit&nbsp;</a>
+            <a href="{% url 'add-equipment' %}" class="btn btn-sm btn-outline-success">+ Add Equipment&nbsp;</a>
         </div>
     </div>
 </div>
@@ -28,7 +29,7 @@
 <!-- messages -->
 {% include 'partials/messages.html'%}
 
-<!-- Table data view -->
+<!-- Equipment table -->
 <div class="card shadow-sm border-0 p-3 pb-0 mt-1">
     <div class="table-responsive app-table">
         {% if items %}
@@ -90,6 +91,7 @@
         {% endif %}
     </div>
 
+
     <!-- search table -->
     <div class="table-output" style="display: none;">
         <table class="table table-hover table-sm">
@@ -111,6 +113,66 @@
     </div>
 </div>
 
+
+<!-- Medical Kit table -->
+<div class="card shadow-sm border-0 p-3 pb-0 mt-1">
+    <div class="table-responsive app-table">
+        {% if items %}
+        <table class="table table-hover table-sm">
+            <thead>
+                <tr>
+                    <th scope="col">Kit Name</th>
+                    <th scope="col">Equipments</th>
+                    <th scope="col">Order</th>
+                    <th scope="col" class="text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in medKit %}
+
+                <tr class="align-middle">
+                    <td>
+                        {{item.kitName}}
+                    </td>
+                    <td>
+                        {% for equipment in item.equipment.all %}
+                        {{ equipment.name }}
+                        {% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% if item.order != null %}
+                        {{item.order}}
+                        {% else %}
+                        ---
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <div class="d-flex flex-row justify-content-end gap-2">
+                            <a href="{% url 'edit-medicalkit' item.pk %}" type="button"
+                                class="btn btn-primary btn-small">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form id="delete-kit-form-{{ item.pk }}" action="{% url 'delete-medicalkit' item.pk %}"
+                                method="post" class="position-relative">
+                                {% csrf_token %}
+                                <button type="button" data-id="{{ item.pk }}" onclick="confirmKitDeletion(this)"
+                                    class="btn btn-danger btn-small">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <h5 class="mb-3">No equipment is there in lab</h5>
+        {% endif %}
+    </div>
+</div>
+
 <!-- pagination -->
 <div class="page">
     {% include 'partials/pagination.html'%}
@@ -124,6 +186,14 @@
             document.getElementById('delete-form-' + equipmentId).submit();
         }
     }
+
+    function confirmKitDeletion(button) {
+        const kitId = button.getAttribute('data-id');
+        if (confirm("Are you sure you want to delete this medical kit?")) {
+            document.getElementById('delete-kit-form-' + kitId).submit();
+        }
+    }
+
 
     function confirmDeletion2(button) {
         const equipmentId = button.getAttribute('data-id');

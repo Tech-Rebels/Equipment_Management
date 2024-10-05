@@ -19,8 +19,8 @@ from django.db import transaction as db_transaction
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 
-from .forms import CreateUserForm, UserEditForm, AddEquipmentForm, EquipmentForm
-from .models import Equipment, Student, Transaction
+from .forms import CreateUserForm, UserEditForm, AddEquipmentForm, EquipmentForm, AddMedicalKitForm
+from .models import Equipment, Student, Transaction, MedicalKit
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -81,7 +81,7 @@ def index(request):
         returned_count = borrowed_count - not_returned_count
 
         # table data
-        transactions_list = Transaction.objects.filter(handled_by=request.user, borrowed_at__date=today).order_by('borrowed_at') # , borrowed_at__date=today
+        transactions_list = Transaction.objects.filter(handled_by=request.user, borrowed_at__date=today).order_by('status','-borrowed_at') # , borrowed_at__date=today
         no_of_items = 13
         paginator = Paginator(transactions_list, no_of_items)
         page = request.GET.get('page')
@@ -120,7 +120,7 @@ def admin_dashboard(request, pk):
     returned_count = borrowed_count - not_returned_count
 
     # table data
-    transactions_list = Transaction.objects.filter(handled_by=lab, borrowed_at__date=today).order_by('borrowed_at') # , borrowed_at__date=today
+    transactions_list = Transaction.objects.filter(handled_by=lab, borrowed_at__date=today).order_by('status','-borrowed_at') # , borrowed_at__date=today
     no_of_items = 13
     paginator = Paginator(transactions_list, no_of_items)
     page = request.GET.get('page')
@@ -187,9 +187,9 @@ def history_filter(request):
 
         if search_str:
             transactions = transactions.filter(
-                Q(student__name__icontains=search_str) |
-                Q(student__regno__icontains=search_str) |
-                Q(equipment__name__icontains=search_str)
+                Q(studentName__icontains=search_str) |
+                Q(studentRegno__icontains=search_str) |
+                Q(equipmentName__icontains=search_str)
             ).distinct()
 
         if from_date_str:
@@ -205,13 +205,13 @@ def history_filter(request):
 
         data = []
         for transaction in transactions:
-            equipment_names = ', '.join([equipment.name for equipment in transaction.equipment.all()])
+            # equipment_names = ', '.join([equipment.name for equipment in transaction.equipment.all()])
             borrowed_at = transaction.borrowed_at.strftime('%Y-%m-%d %H:%M:%S')
             returned_at = transaction.returned_at.strftime('%Y-%m-%d %H:%M:%S') if transaction.returned_at else 'Not Returned'
             data.append({
-                'student__name': transaction.student.name,
-                'student__regno': transaction.student.regno,
-                'equipment__name': equipment_names,
+                'student__name': transaction.studentName,
+                'student__regno': transaction.studentRegno,
+                'equipment__name': transaction.equipmentName,
                 'borrowed_at': borrowed_at,
                 'returned_at': returned_at,
                 'status': transaction.status,
@@ -253,10 +253,10 @@ def admin_history_filter(request):
 
         if search_str:
             transactions = transactions.filter(
-                Q(student__name__icontains=search_str) |
-                Q(student__regno__icontains=search_str) |
-                Q(equipment__name__icontains=search_str) |
-                Q(handled_by__username__icontains=search_str)
+                Q(studentName__icontains=search_str) |
+                Q(studentRegno__icontains=search_str) |
+                Q(equipmentName__icontains=search_str) |
+                Q(labName__icontains=search_str)
             ).distinct()
 
         if from_date_str:
@@ -272,14 +272,13 @@ def admin_history_filter(request):
 
         data = []
         for transaction in transactions:
-            equipment_names = ', '.join([equipment.name for equipment in transaction.equipment.all()])
             borrowed_at = transaction.borrowed_at.strftime('%Y-%m-%d %H:%M:%S')
             returned_at = transaction.returned_at.strftime('%Y-%m-%d %H:%M:%S') if transaction.returned_at else 'Not Returned'
             data.append({
-                'handled_by': transaction.handled_by.username if transaction.handled_by else 'Unknown',
-                'student__name': transaction.student.name if transaction.student else 'Unknown',
-                'student__regno': transaction.student.regno if transaction.student else 'Unknown',
-                'equipment__name': equipment_names,
+                'handled_by': transaction.labName if transaction.labName else 'Unknown',
+                'student__name': transaction.studentName if transaction.studentName else 'Unknown',
+                'student__regno': transaction.studentRegno if transaction.studentRegno else 'Unknown',
+                'equipment__name': transaction.equipmentName,
                 'borrowed_at': borrowed_at,
                 'returned_at': returned_at,
                 'status': transaction.status,
@@ -314,13 +313,12 @@ def export_history(request):
 
     # Write the data
     for transaction in transactions:
-        equipment_names = ', '.join(equipment.name for equipment in transaction.equipment.all())
         ws.append([
-            transaction.handled_by.username if transaction.handled_by else '',
-            transaction.student.name,
-            transaction.student.regno,
-            equipment_names,
-            transaction.borrowed_at.strftime('%Y-%m-%d %H:%M:%S'),
+            transaction.labName if transaction.labName else '',
+            transaction.studentName if transaction.studentName else '',  # Handle None case
+            transaction.studentRegno if transaction.studentRegno else '',  # Handle None case
+            transaction.equipmentName if transaction.equipmentName else '',  # Handle empty equipment names
+            transaction.borrowed_at.strftime('%Y-%m-%d %H:%M:%S') if transaction.borrowed_at else '',
             transaction.returned_at.strftime('%Y-%m-%d %H:%M:%S') if transaction.returned_at else 'Not Returned',
             'Returned' if transaction.status else 'Not Returned'
         ])
@@ -333,7 +331,6 @@ def export_history(request):
     wb.save(response)
 
     return response
-
 
 
 #
@@ -353,6 +350,8 @@ def Borrow_Equipment(request):
                         equipment = Equipment.objects.filter(name=equipment_name).first()
                         if not equipment:
                             raise ValueError(f"Equipment {equipment_name} not found.")
+                        if equipment.available_count <= 0:
+                            raise ValueError(f"Equipment {equipment_name} is out of stock.")
                         equipment_objects.append(equipment)
                         equipment.available_count -= 1
                         equipment.save()
@@ -470,7 +469,8 @@ def get_student_details(request):
 # Equipments
 @user_passes_test_custom(is_user, 'dashboard-index')
 def EquipmentList(request):
-    equipments_list = Equipment.objects.filter(lab=request.user)
+    equipments_list = Equipment.objects.filter(lab=request.user).order_by(Coalesce(F('order'), Value('99999')),'order')
+    medKit_list = MedicalKit.objects.filter(lab=request.user).order_by(Coalesce(F('order'), Value('99999')),'order')
     no_of_items = 10
     paginator = Paginator(equipments_list, no_of_items)
     page = request.GET.get('page')
@@ -483,7 +483,9 @@ def EquipmentList(request):
         items = paginator.page(paginator.num_pages)
 
     context = {
-        'items': items
+        'items': items,
+        'medKit': medKit_list
+
     }
     return render(request, 'UApp/Equipment/equipments.html', context)
 
@@ -548,6 +550,92 @@ def Search_Equipment(request):
         data = equipment.values()
 
         return JsonResponse(list(data), safe=False)
+
+# Medical Kit
+@user_passes_test_custom(is_user, 'dashboard-index')
+def Add_MedicalKit(request):
+    if request.method == 'POST':
+        kit_name = request.POST.get('medKitName')
+        equipment_ids = request.POST.getlist('equipment[]')
+        order = request.POST.get('order')
+
+        if order == '':
+            order = None
+
+        try:
+            medical_kit = MedicalKit.objects.create(
+                kitName=kit_name,
+                lab=request.user,
+                order=order
+            )
+
+            if equipment_ids:
+                equipment_objects = Equipment.objects.filter(id__in=equipment_ids)
+                medical_kit.equipment.set(equipment_objects)
+
+            messages.success(request, 'Medical Kit added successfully.')
+            return redirect('equipments-list')
+
+        except Exception as e:
+            messages.error(request, f"Error adding Medical Kit: {str(e)}")
+
+    else:
+        items = Equipment.objects.filter(lab=request.user).order_by(Coalesce(F('order'), Value('99999')), 'order')
+        context = {
+            'items': items
+        }
+
+    return render(request, 'UApp/Equipment/MedKit/add_medKit.html', context)
+
+@user_passes_test_custom(is_user, 'dashboard-index')
+def Edit_MedicalKit(request, kit_id):
+    medical_kit = get_object_or_404(MedicalKit, id=kit_id)
+
+    if request.method == 'POST':
+        kit_name = request.POST.get('medKitName')
+        equipment_ids = request.POST.getlist('equipment[]')
+        order = request.POST.get('order')
+
+        try:
+            if order == '':
+                order = None
+
+            medical_kit.kitName = kit_name
+            medical_kit.order = order
+            medical_kit.save()
+
+            equipment_objects = Equipment.objects.filter(id__in=equipment_ids)
+            medical_kit.equipment.set(equipment_objects)
+
+            messages.success(request, 'Medical kit updated successfully!')
+            return redirect('equipments-list')
+
+        except Exception as e:
+            messages.error(request, f"Medical Kit not updated: {str(e)}")
+
+    else:
+        items = Equipment.objects.filter(lab=request.user).order_by(Coalesce(F('order'), Value('99999')), 'order')
+        selected_equipment_ids = medical_kit.equipment.values_list('id', flat=True)
+
+        context = {
+            'items': items,
+            'medical_kit': medical_kit,
+            'selected_equipment_ids': selected_equipment_ids
+        }
+
+    return render(request, 'UApp/Equipment/MedKit/edit_medKit.html', context)
+
+@user_passes_test_custom(is_user, 'dashboard-index')
+def Delete_MedicalKit(request, pk):
+    medical_kit = get_object_or_404(MedicalKit, pk=pk)
+    if request.method == 'POST':
+        medical_kit.delete()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'success'}, status=200)
+        else:
+            messages.success(request, 'Medical Kit deleted successfully.')
+            return redirect('equipments-list')
+    return redirect('equipments-list')
 
 
 # 
@@ -614,7 +702,6 @@ def Add_Student(request):
         return redirect('students-list')
 
     return render(request, 'UApp/Student/add_student.html')
-
 
 @user_passes_test_custom(is_admin, 'dashboard-index')
 def Upload_Students(request):

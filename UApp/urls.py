@@ -30,6 +30,10 @@ urlpatterns = [
     path('equipment/delete/<int:pk>/', views.Delete_Equipment, name='delete-equipment'),
     path('search-equipment', views.Search_Equipment, name='search-equipment'),
 
+    path('equipments/medical-kit/add/', views.Add_MedicalKit, name='add-medicalKit'),
+    path('equipments/medical-kit/edit/<int:kit_id>/', views.Edit_MedicalKit, name='edit-medicalkit'),
+    path('equipments/medical-kit/delete/<int:pk>/', views.Delete_MedicalKit, name='delete-medicalkit'),
+
     path('students/', views.StudentList, name='students-list'),
     path('students/add/', views.Add_Student, name='add-student'),
     path('students/edit/<int:pk>/', views.Edit_Student, name='edit-student'),
@@ -42,6 +46,5 @@ urlpatterns = [
     path('users/view/<int:pk>/', views.View_User, name='view-user'),
     path('users/edit/<int:pk>/', views.Edit_User, name='edit-user'),
     path('users/delete/<int:pk>/', views.Delete_User, name='delete-user'),
-
 
 ]

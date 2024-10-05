@@ -28,15 +28,47 @@ class Equipment(models.Model):
     def __str__(self):
         return f"{self.lab.username} - {self.name}"
 
+class MedicalKit(models.Model):
+    lab = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    kitName = models.CharField(max_length=100, null=False, blank=False)
+    equipment = models.ManyToManyField(Equipment)
+    order = models.IntegerField(null=True, blank=True)
+
+    def __str__(self):
+        equipment_names = ', '.join(equipment.name for equipment in self.equipment.all())
+        return f"{self.kitName} - {self.lab.username} - {equipment_names}"
+
 class Transaction(models.Model):
     student = models.ForeignKey(Student, null=True, on_delete=models.SET_NULL)
+    studentName = models.CharField(max_length=100, null=True)
+    studentRegno = models.CharField(max_length=100, null=True)
     equipment = models.ManyToManyField(Equipment)
+    equipmentName = models.CharField(max_length=200, null=True)
     borrowed_at = models.DateTimeField()
     returned_at = models.DateTimeField(null=True, blank=True)
     status = models.BooleanField(default=False)
     handled_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    labName = models.CharField(max_length=100, null=True)
+
+    def save(self, *args, **kwargs):
+        if self.student:
+            self.studentName = self.student.name
+            self.studentRegno = self.student.regno
+        else:
+            self.studentName = 'Unknown'
+            self.studentRegno = 'Unknown'
+        if self.handled_by:
+            self.labName = self.handled_by.username
+        else:
+            self.labName = 'Unknown'
+
+        super().save(*args, **kwargs)
+
+        equipment_names = ', '.join(equipment.name for equipment in self.equipment.all())
+        self.equipmentName = equipment_names if equipment_names else 'Unknown'
+
+        super().save(update_fields=['studentName', 'studentRegno', 'equipmentName'])
 
     def __str__(self):
-        equipment_names = ', '.join([equipment.name for equipment in self.equipment.all()]) if self.equipment.exists() else 'Unknown'
         return_status = 'Returned' if self.status == True else 'Not Returned'
-        return f"{self.borrowed_at if self.borrowed_at else 'Unknown'} - {self.handled_by.username if self.handled_by else 'Unknown'} - {self.student.regno if self.student else 'Unknown'} - {equipment_names} - {return_status}"
+        return f"{self.borrowed_at if self.borrowed_at else 'Unknown'} - {self.labName} - {self.studentRegno} - {self.equipmentName} - {return_status}"
