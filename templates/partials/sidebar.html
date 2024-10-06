@@ -30,6 +30,13 @@
           Equipments
         </a>
       </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'treatments-list' %}">
+          <i class="bi bi-virus2"></i>
+          <!-- <i class="fa-solid fa-stethoscope"></i> -->
+          Treatments
+        </a>
+      </li>
       {% elif user.is_authenticated and user.is_staff %}
       <li class="nav-item">
         <a class="nav-link" href="{% url 'admin-history' %}">

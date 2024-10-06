@@ -19,8 +19,8 @@ from django.db import transaction as db_transaction
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 
-from .forms import CreateUserForm, UserEditForm, AddEquipmentForm, EquipmentForm, AddMedicalKitForm
-from .models import Equipment, Student, Transaction, MedicalKit
+from .forms import CreateUserForm, UserEditForm, AddEquipmentForm, EquipmentForm, AddMedicalKitForm, AddTreatmentForm, EditTreatmentForm
+from .models import Equipment, Student, Transaction, MedicalKit, Treatment
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -308,7 +308,7 @@ def export_history(request):
     ws.title = 'Transaction History'
 
     # Write the header
-    headers = ['Lab', 'Name', 'Reg.No.', 'Equipment', 'Borrow Time', 'Return Time', 'Status']
+    headers = ['Lab', 'Name', 'Reg.No.', 'Equipment','Treated for', 'Borrow Time', 'Return Time', 'Status']
     ws.append(headers)
 
     # Write the data
@@ -318,6 +318,7 @@ def export_history(request):
             transaction.studentName if transaction.studentName else '',  # Handle None case
             transaction.studentRegno if transaction.studentRegno else '',  # Handle None case
             transaction.equipmentName if transaction.equipmentName else '',  # Handle empty equipment names
+            transaction.treatmentName if transaction.treatmentName else '',  # Handle empty equipment names
             transaction.borrowed_at.strftime('%Y-%m-%d %H:%M:%S') if transaction.borrowed_at else '',
             transaction.returned_at.strftime('%Y-%m-%d %H:%M:%S') if transaction.returned_at else 'Not Returned',
             'Returned' if transaction.status else 'Not Returned'
@@ -339,42 +340,63 @@ def export_history(request):
 def Borrow_Equipment(request):
     if request.method == 'POST':
         student_rfid = request.POST.get('rfidno')
-        selected_equipments = request.POST.getlist('equipment[]')
+        selected_items = request.POST.getlist('equipment[]')  # Get both equipment and medkits
+        selected_treatment = request.POST.getlist('treatment[]')  # Get both equipment and medkits
         student = Student.objects.filter(rfidno=student_rfid).first()
 
         if student:
             try:
                 with db_transaction.atomic():
                     equipment_objects = []
-                    for equipment_name in selected_equipments:
-                        equipment = Equipment.objects.filter(name=equipment_name).first()
-                        if not equipment:
-                            raise ValueError(f"Equipment {equipment_name} not found.")
-                        if equipment.available_count <= 0:
-                            raise ValueError(f"Equipment {equipment_name} is out of stock.")
-                        equipment_objects.append(equipment)
-                        equipment.available_count -= 1
-                        equipment.save()
+                    treatment_objects = []
+                    for item_name in selected_items:
+                        # Check if the item is a medkit or equipment
+                        medkit = MedicalKit.objects.filter(kitName=item_name).first()
+                        if medkit:
+                            # Handle medkit borrowing
+                            for equipment in medkit.equipment.all():
+                                if equipment.available_count <= 0:
+                                    raise ValueError(f"Equipment {equipment.name} in medkit {medkit.name} is unavailable.")
+                                equipment.available_count -= 1
+                                equipment.save()
+                                equipment_objects.append(equipment)
+                        else:
+                            # Handle individual equipment borrowing
+                            equipment = Equipment.objects.filter(name=item_name).first()
+                            if not equipment:
+                                raise ValueError(f"Equipment {item_name} not found.")
+                            if equipment.available_count <= 0:
+                                raise ValueError(f"Equipment {item_name} is unavailable.")
+                            equipment.available_count -= 1
+                            equipment.save()
+                            equipment_objects.append(equipment)
+
+                    for treatment_name in selected_treatment:
+                        treatment = Treatment.objects.filter(treatment=treatment_name).first()
+                        if treatment:
+                            treatment_objects.append(treatment)
+                        else:
+                            raise ValueError(f"Treatment {treatment_name} not found.")
 
                     # Check for an existing transaction with status=False
                     existing_transaction = Transaction.objects.filter(student=student, status=False, handled_by=request.user).first()
 
                     if existing_transaction:
-                        # Update the existing transaction
                         existing_transaction.equipment.add(*equipment_objects)
+                        existing_transaction.treatment.add(*treatment_objects)
                         existing_transaction.borrowed_at = timezone.localtime()
                         existing_transaction.save()
-                        messages.success(request, 'Equipment added to existing transaction successfully.')
+                        messages.success(request, 'Equipment/Medkit added to existing transaction successfully.')
                     else:
-                        # Create a new transaction
                         transaction_record = Transaction.objects.create(
                             student=student,
                             borrowed_at=timezone.localtime(),
                             handled_by=request.user
                         )
                         transaction_record.equipment.set(equipment_objects)
+                        transaction_record.treatment.set(treatment_objects)
                         transaction_record.save()
-                        messages.success(request, 'New equipment borrowed successfully.')
+                        messages.success(request, 'New Equipment/Medkit borrowed successfully.')
 
             except ValueError as e:
                 messages.error(request, f'An error occurred: {e}')
@@ -383,7 +405,7 @@ def Borrow_Equipment(request):
 
         return redirect('dashboard-index')
 
-    else:  # This is for handling GET requests
+    else:  # Handling GET requests
         current_datetime = timezone.localtime().strftime('%Y-%m-%dT%H:%M')
         context = {
             'current_datetime': current_datetime
@@ -445,19 +467,20 @@ def get_student_details(request):
             transactions = Transaction.objects.filter(student=student, status=False, handled_by=request.user)
             borrowed_items = list(transactions.values('id', 'equipment__name', 'borrowed_at'))
 
-            # Get the names of the equipment already borrowed and not returned
             borrowed_equipment_ids = transactions.values_list('equipment', flat=True)
-            borrowed_equipment_names = Equipment.objects.filter(id__in=borrowed_equipment_ids).values_list('name', flat=True)
+            borrowed_treatment_ids = transactions.values_list('treatment', flat=True)
 
-            # Get the available equipment that is not already borrowed by the student
             available_equipment = Equipment.objects.filter(lab=request.user, available_count__gt=0).exclude(id__in=borrowed_equipment_ids).order_by(Coalesce('order', Value(float('inf'))).asc()).values_list('name', flat=True)
+            available_medkits = MedicalKit.objects.filter(lab=request.user).exclude(Q(equipment__available_count__lte=0) | Q(equipment__id__in=borrowed_equipment_ids)).order_by(Coalesce('order', Value(float('inf'))).asc()).values_list('kitName', flat=True)  
+            treatment = Treatment.objects.filter(lab=request.user).exclude(id__in=borrowed_treatment_ids).order_by(Coalesce('order', Value(float('inf'))).asc()).values_list('treatment', flat=True)  
 
             student_data = {
                 'name': student.name,
                 'regno': student.regno,
                 'image_url': student.image.url,
                 'borrowed_items': borrowed_items,
-                'available_equipment': list(available_equipment)
+                'available_equipment': list(available_medkits) + list(available_equipment),
+                'treatment' : list(treatment)
             }
             return JsonResponse({'success': True, 'student': student_data})
         except Student.DoesNotExist:
@@ -471,19 +494,19 @@ def get_student_details(request):
 def EquipmentList(request):
     equipments_list = Equipment.objects.filter(lab=request.user).order_by(Coalesce(F('order'), Value('99999')),'order')
     medKit_list = MedicalKit.objects.filter(lab=request.user).order_by(Coalesce(F('order'), Value('99999')),'order')
-    no_of_items = 10
-    paginator = Paginator(equipments_list, no_of_items)
-    page = request.GET.get('page')
+    # no_of_items = 10
+    # paginator = Paginator(equipments_list, no_of_items)
+    # page = request.GET.get('page')
 
-    try:
-        items = paginator.page(page)
-    except PageNotAnInteger:
-        items = paginator.page(1)
-    except EmptyPage:
-        items = paginator.page(paginator.num_pages)
+    # try:
+    #     items = paginator.page(page)
+    # except PageNotAnInteger:
+    #     items = paginator.page(1)
+    # except EmptyPage:
+    #     items = paginator.page(paginator.num_pages)
 
     context = {
-        'items': items,
+        'items': equipments_list,
         'medKit': medKit_list
 
     }
@@ -637,6 +660,96 @@ def Delete_MedicalKit(request, pk):
             return redirect('equipments-list')
     return redirect('equipments-list')
 
+
+# 
+# Treatment
+@user_passes_test_custom(is_user, 'dashboard-index')
+def TreatmentList(request):
+    treatment_list = Treatment.objects.filter(lab=request.user).order_by(Coalesce(F('order'), Value('99999')),'order')
+    # no_of_items = 10
+    # paginator = Paginator(treatment_list, no_of_items)
+    # page = request.GET.get('page')
+
+    # try:
+    #     items = paginator.page(page)
+    # except PageNotAnInteger:
+    #     items = paginator.page(1)
+    # except EmptyPage:
+    #     items = paginator.page(paginator.num_pages)
+
+    context = {
+        'items': treatment_list,
+    }
+
+    return render(request, 'UApp/Treatment/treatments.html', context)
+
+@user_passes_test_custom(is_user, 'dashboard-index')
+def Add_Treatment(request):
+    if request.method == 'POST':
+        form = AddTreatmentForm(request.POST)
+        if form.is_valid():
+            treat = form.save(commit=False)
+            treat.lab = request.user
+            messages.success(request, 'Treatment added successfully.')
+            treat.save()
+            return redirect('treatments-list')
+    else:
+        form = AddTreatmentForm()
+    return render(request, 'UApp/Treatment/add_treatment.html', {'form': form})
+
+@user_passes_test_custom(is_user, 'dashboard-index')
+def Edit_Treatment(request, pk):
+    treatment = get_object_or_404(Treatment, id=pk, lab=request.user)
+    
+    if request.method == 'POST':
+        form = EditTreatmentForm(request.POST, instance=treatment)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Treatment edited successfully.')
+            return redirect('treatments-list')  
+    else:
+        form = EditTreatmentForm(instance=treatment)
+        context = {
+            'form': form,
+        }
+
+    return render(request, 'UApp/Treatment/edit_treatment.html', context)
+
+@user_passes_test_custom(is_user, 'dashboard-index')
+def Delete_Treatment(request, pk):
+    treat = get_object_or_404(Treatment, pk=pk)
+    if request.method == 'POST':
+        treat.delete()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'success'}, status=200)
+        else:
+            messages.success(request, 'Treatment deleted successfully.')
+            return redirect('treatments-list')
+    return redirect('treatments-list')
+
+
+# 
+# order change
+def Update_Order(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        ordered_ids = data.get('ordered_ids', [])
+        item_type = data.get('type', '')  # Get the type of item (equipment, treatment, etc.)
+
+        if item_type == 'equipment':
+            model = Equipment
+        elif item_type == 'treatment':
+            model = Treatment
+        elif item_type == 'medkit':
+            model = MedicalKit
+        else:
+            return JsonResponse({'success': False, 'error': 'Invalid item type'}, status=400)
+
+        for index, item_id in enumerate(ordered_ids):
+            model.objects.filter(id=item_id).update(order=index)
+
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False}, status=400)
 
 # 
 # Students

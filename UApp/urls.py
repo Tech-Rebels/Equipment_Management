@@ -34,6 +34,13 @@ urlpatterns = [
     path('equipments/medical-kit/edit/<int:kit_id>/', views.Edit_MedicalKit, name='edit-medicalkit'),
     path('equipments/medical-kit/delete/<int:pk>/', views.Delete_MedicalKit, name='delete-medicalkit'),
 
+    path('treatments/', views.TreatmentList, name='treatments-list'),
+    path('treatments/add/', views.Add_Treatment, name='add-treatment'),
+    path('treatments/edit/<int:pk>/', views.Edit_Treatment, name='edit-treatment'),
+    path('treatments/delete/<int:pk>/', views.Delete_Treatment, name='delete-treatment'),
+    
+    path('update-order/', views.Update_Order, name='update-order'),
+
     path('students/', views.StudentList, name='students-list'),
     path('students/add/', views.Add_Student, name='add-student'),
     path('students/edit/<int:pk>/', views.Edit_Student, name='edit-student'),

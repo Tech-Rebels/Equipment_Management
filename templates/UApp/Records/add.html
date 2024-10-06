@@ -6,9 +6,15 @@
 {% block content %}
 <!-- css -->
 <style>
-    #equipment_name {
+    #equipment_name, #treatment_name {
         display: none;
     }
+
+    label[for="equipment_name"], label[for="treatment_name"] {
+        display: none;
+    }
+
+
 
     /* .mult-select-tag .btn-container{
         background-color: #0d6efd !important;
@@ -66,11 +72,18 @@
         <div class="col">
             <link rel="stylesheet" href="{% static '/select/css/multi-select-tag.css' %}" />
             <script src="{% static '/select/js/multi-select-tag.js' %}"></script>
-            <label for="equipment_name">Select Equipment</label>
-
+            <label for="equipment_name">Select Equipments</label>
             <div class="d-flex flex-row gap-2">
                 <select name="equipment[]" id="equipment_name" multiple required>
                     <!-- Equipment options will be populated dynamically -->
+                </select>
+
+            </div>
+            <br>
+
+            <label for="treatment_name">Treated for</label>
+            <div class="d-flex flex-row gap-2">
+                <select name="treatment[]" id="treatment_name" multiple required>
                 </select>
 
             </div>
@@ -133,23 +146,55 @@
                         var borrowedItemsList = $('#borrowedItemsList');
                         borrowedItemsList.empty();
                         var availableEquipment = data.student.available_equipment;
+                        var availableTreatment = data.student.treatment;
 
                         // Populate the equipment dropdown
                         var equipmentSelect = $('#equipment_name');
+                        var treatmentSelect = $('#treatment_name');
                         equipmentSelect.empty();
+                        treatmentSelect.empty();
 
-                        availableEquipment.forEach(function (equipment) {
-                            equipmentSelect.append('<option value="' + equipment + '">' + equipment + '</option>');
+                        // availableEquipment.forEach(function (equipment) {
+                        //     equipmentSelect.append('<option value="' + equipment + '">' + equipment + '</option>');
+                        // });
+                        availableEquipment.forEach(function (item) {
+                            var isMedkit = item.includes('Kit:');  // Assuming medkit names are prefixed with "Kit:"
+                            var optionText = isMedkit ? '[Kit] ' + item : item;
+                            equipmentSelect.append('<option value="' + item + '">' + optionText + '</option>');
                         });
+                        availableTreatment.forEach(function (treatment) {
+                            treatmentSelect.append('<option value="' + treatment + '">' + treatment + '</option>');
+                        });
+
+                        if (equipmentSelect.children('option').length > 0) {
+                            $('label[for="equipment_name"]').show();
+                        }
+                        if (treatmentSelect.children('option').length > 0) {
+                            $('label[for="treatment_name"]').show();
+                        }
+
 
                         new MultiSelectTag('equipment_name', {
                             rounded: true,
                             shadow: false,
                             placeholder: 'Search',
                         });
+                        new MultiSelectTag('treatment_name', {
+                            rounded: true,
+                            shadow: false,
+                            placeholder: 'Search',
+                        });
 
-                        $('.input-container').click(function () {
-                            $('.btn-container button').click();
+                        // $('.input-container').click(function () {
+                        //     $('.btn-container button').click();
+                        // });
+
+                        $(document).ready(function () {
+                            $('.input-container').each(function () {
+                                $(this).click(function () {
+                                    $(this).closest('.body').find('.btn-container button').click();
+                                });
+                            });
                         });
 
                         if (borrowedItems.length > 0) {
@@ -217,12 +262,12 @@
         var rfidTimeout;
 
         // Global keydown event listener
-        document.addEventListener('keydown', function(event) {
+        document.addEventListener('keydown', function (event) {
             // Check if the key is a number
             if (event.key >= '0' && event.key <= '9') {
                 rfidBuffer += event.key;
                 clearTimeout(rfidTimeout);
-                rfidTimeout = setTimeout(function() {
+                rfidTimeout = setTimeout(function () {
                     if (rfidBuffer.length > 0) {
                         $('#rfidno').val(rfidBuffer);
                         $('#rfidno').trigger('input');
@@ -245,9 +290,10 @@
             }
         });
 
-        $('.input-container').click(function () {
-            $('.btn-container button').click();
-        });
+        // $('.input-container').click(function () {
+        //     $('.btn-container button').click();
+        // });
+
 
         window.onload = function () {
             document.getElementById('rfidno').focus();
@@ -259,7 +305,7 @@
         };
     });
 
-    
+
 </script>
 
 {% endblock content %}

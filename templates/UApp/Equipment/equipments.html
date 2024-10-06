@@ -12,7 +12,7 @@
 </head>
 
 <!-- top bar -->
-<div class="d-flex justify-content-between flex-wrap flex-md nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+<div class="d-flex justify-content-between flex-wrap flex-md nowrap align-items-center pt-3 pb-2 mb-2 border-bottom">
     <h1 class="h2">Equipments List</h1>
     <form class="d-flex" role="search">
         <input class="form-control" id="searchfield" type="search" placeholder="Search" aria-label="Search">
@@ -20,17 +20,29 @@
     </form>
     <div class="btn-toolbar mb-2 mb-md 0">
         <div class="btn-group me-2">
-            <a href="{% url 'add-medicalKit' %}" class="btn btn-sm btn-outline-primary">+ Add Medical Kit&nbsp;</a>
+            <a href="{% url 'add-medicalKit' %}" class="btn btn-sm btn-outline-secondary">+ Add Medical Kit&nbsp;</a>
             <a href="{% url 'add-equipment' %}" class="btn btn-sm btn-outline-success">+ Add Equipment&nbsp;</a>
         </div>
+    </div>
+</div>
+
+<!-- equipment/medkit radio -->
+<div class="d-flex justify-content-center flex-wrap flex-md nowrap align-items-center pb-2">
+    <div class="btn-group" role="group" aria-label="Basic radio toggle button group" style="margin-left: -2.6vw;">
+        <input type="radio" class="btn-check" name="btnradio" id="equipmentRadio" autocomplete="off" checked>
+        <label class="btn btn-outline-primary" for="equipmentRadio">Equipments</label>
+
+        <input type="radio" class="btn-check" name="btnradio" id="medkitRadio" autocomplete="off">
+        <label class="btn btn-outline-primary" for="medkitRadio">Medical Kit</label>
     </div>
 </div>
 
 <!-- messages -->
 {% include 'partials/messages.html'%}
 
+
 <!-- Equipment table -->
-<div class="card shadow-sm border-0 p-3 pb-0 mt-1">
+<div class="card shadow-sm border-0 p-3 pb-0 mt-1" id="equipmentTable">
     <div class="table-responsive app-table">
         {% if items %}
         <table class="table table-hover table-sm">
@@ -39,16 +51,16 @@
                     <th scope="col">Name</th>
                     <th scope="col">Total Count</th>
                     <th scope="col">Available Count</th>
-                    <th scope="col">Order</th>
+                    <!-- <th scope="col">Order</th> -->
                     <th scope="col">Category</th>
                     <!-- <th scope="col">Availability</th> -->
                     <th scope="col" class="text-end">Action</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id='equipment-list' data-type="equipment">
                 {% for item in items %}
 
-                <tr class="align-middle">
+                <tr class="align-middle" data-id="{{ item.id }}">
                     <td>
                         {{item.name}}
                     </td>
@@ -58,13 +70,13 @@
                     <td>
                         {{item.available_count}}
                     </td>
-                    <td>
+                    <!-- <td>
                         {% if item.order != null %}
                         {{item.order}}
                         {% else %}
                         ---
                         {% endif %}
-                    </td>
+                    </td> -->
                     <td>
                         {{item.category}}
                     </td>
@@ -101,7 +113,7 @@
                     <!-- <th scope="col">ID no.</th> -->
                     <th scope="col">Total Count</th>
                     <th scope="col">Available Count</th>
-                    <th scope="col">Order</th>
+                    <!-- <th scope="col">Order</th> -->
                     <th scope="col">Category</th>
                     <!-- <th scope="col">Availability</th> -->
                     <th scope="col" class="text-end">Action</th>
@@ -115,7 +127,7 @@
 
 
 <!-- Medical Kit table -->
-<div class="card shadow-sm border-0 p-3 pb-0 mt-1">
+<div class="card shadow-sm border-0 p-3 pb-0 mt-1" id="medkitTable" style="display: none;">
     <div class="table-responsive app-table">
         {% if items %}
         <table class="table table-hover table-sm">
@@ -123,14 +135,14 @@
                 <tr>
                     <th scope="col">Kit Name</th>
                     <th scope="col">Equipments</th>
-                    <th scope="col">Order</th>
+                    <!-- <th scope="col">Order</th> -->
                     <th scope="col" class="text-end">Action</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id='medkit-list' data-type="medkit">
                 {% for item in medKit %}
 
-                <tr class="align-middle">
+                <tr class="align-middle" data-id="{{ item.id }}">
                     <td>
                         {{item.kitName}}
                     </td>
@@ -140,13 +152,13 @@
                         {% if not forloop.last %}, {% endif %}
                         {% endfor %}
                     </td>
-                    <td>
+                    <!-- <td>
                         {% if item.order != null %}
                         {{item.order}}
                         {% else %}
                         ---
                         {% endif %}
-                    </td>
+                    </td> -->
                     <td class="text-end">
                         <div class="d-flex flex-row justify-content-end gap-2">
                             <a href="{% url 'edit-medicalkit' item.pk %}" type="button"
@@ -168,15 +180,11 @@
             </tbody>
         </table>
         {% else %}
-        <h5 class="mb-3">No equipment is there in lab</h5>
+        <h5 class="mb-3">No Medical Kit is there in lab</h5>
         {% endif %}
     </div>
 </div>
 
-<!-- pagination -->
-<div class="page">
-    {% include 'partials/pagination.html'%}
-</div>
 
 <!-- delete confirmation -->
 <script>
@@ -277,7 +285,6 @@
                             <td>${item.name}</td>
                             <td>${item.count}</td>
                             <td>${item.available_count}</td>
-                            <td>${item.order ? item.order : '---'}</td>
                             <td>${item.category}</td>
                             <td class="text-end">
                                 <div class="d-flex flex-row justify-content-end gap-2">
@@ -302,6 +309,70 @@
         }
     });
 
+
+    // sortable
+    document.addEventListener('DOMContentLoaded', function () {
+        function initSortableList(listId) {
+            var el = document.getElementById(listId);
+            var itemType = el.dataset.type;  // Get the type (equipment, treatment, medkit)
+            var sortable = Sortable.create(el, {
+                animation: 150,
+                onEnd: function (evt) {
+                    var rows = document.querySelectorAll('#' + listId + ' tr');
+                    var orderedIds = [];
+                    rows.forEach(row => {
+                        orderedIds.push(row.dataset.id);
+                    });
+                    // Send the new order to the server
+                    updateOrder(orderedIds, itemType);
+                }
+            });
+        }
+
+        function updateOrder(orderedIds, itemType) {
+            fetch("{% url 'update-order' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': "{{ csrf_token }}",
+                },
+                body: JSON.stringify({ ordered_ids: orderedIds, type: itemType }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('Order updated successfully!');
+                    } else {
+                        console.error('Order update failed.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        initSortableList('equipment-list');  // For equipment
+        initSortableList('medkit-list');     // For medical kit
+    });
+
+    // toggle visibility
+    document.addEventListener('DOMContentLoaded', function () {
+        const equipmentRadio = document.getElementById('equipmentRadio');
+        const medkitRadio = document.getElementById('medkitRadio');
+        const equipmentTable = document.getElementById('equipmentTable');
+        const medkitTable = document.getElementById('medkitTable');
+
+        // Add event listeners for the radio buttons
+        equipmentRadio.addEventListener('click', function () {
+            equipmentTable.style.display = 'block';
+            medkitTable.style.display = 'none';
+        });
+
+        medkitRadio.addEventListener('click', function () {
+            equipmentTable.style.display = 'none';
+            medkitTable.style.display = 'block';
+        });
+    }); 
 </script>
 
 <!-- style -->
