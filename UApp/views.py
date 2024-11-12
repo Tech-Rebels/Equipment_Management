@@ -71,7 +71,7 @@ def register(request):
 @login_required
 def index(request):
     if not request.user.is_staff:
-        # card
+        # card data
         today = timezone.localdate()
         total_equipment_count = Equipment.objects.filter(lab=request.user).aggregate(Sum('count'))
         borrowed_count_data = Transaction.objects.filter(handled_by=request.user, borrowed_at__date=today).annotate(equipment_count=Count('equipment')).aggregate(total=Sum('equipment_count'))
@@ -80,8 +80,18 @@ def index(request):
         not_returned_count = not_returned_count_data['total'] or 0
         returned_count = borrowed_count - not_returned_count
 
-        # table data
-        transactions_list = Transaction.objects.filter(handled_by=request.user, borrowed_at__date=today).order_by('status','-borrowed_at') # , borrowed_at__date=today
+        # status filter logic
+        status_filter = request.GET.get('status', 'all')  # 'all' by default if no status filter is selected
+        if status_filter == 'returned':
+            transactions_list = Transaction.objects.filter(handled_by=request.user, status=True, borrowed_at__date=today)
+        elif status_filter == 'not_returned':
+            transactions_list = Transaction.objects.filter(handled_by=request.user, status=False, borrowed_at__date=today)
+        else:
+            transactions_list = Transaction.objects.filter(handled_by=request.user, borrowed_at__date=today)
+
+        transactions_list = transactions_list.order_by('status', 'borrowed_at')
+
+        # pagination
         no_of_items = 13
         paginator = Paginator(transactions_list, no_of_items)
         page = request.GET.get('page')
@@ -97,13 +107,14 @@ def index(request):
             'total_equipment_count': total_equipment_count['count__sum'] or 0,
             'borrowed_count': borrowed_count,
             'not_returned_count': not_returned_count,
-            'returned_count': returned_count
+            'returned_count': returned_count,
+            'status_filter': status_filter
         }
         return render(request, 'UApp/index.html', context)
-    elif request.user.is_staff: #and not request.user.is_superuser:
+    elif request.user.is_staff:
         users = User.objects.filter(is_staff=False, is_superuser=False)
         context = {
-            'users' : users
+            'users': users
         }
         return render(request, 'UApp/index.html', context)
 
@@ -212,6 +223,7 @@ def history_filter(request):
                 'student__name': transaction.studentName,
                 'student__regno': transaction.studentRegno,
                 'equipment__name': transaction.equipmentName,
+                'treatment__name': transaction.treatmentName,
                 'borrowed_at': borrowed_at,
                 'returned_at': returned_at,
                 'status': transaction.status,
@@ -279,6 +291,7 @@ def admin_history_filter(request):
                 'student__name': transaction.studentName if transaction.studentName else 'Unknown',
                 'student__regno': transaction.studentRegno if transaction.studentRegno else 'Unknown',
                 'equipment__name': transaction.equipmentName,
+                'treatment__name': transaction.treatmentName,
                 'borrowed_at': borrowed_at,
                 'returned_at': returned_at,
                 'status': transaction.status,
@@ -291,6 +304,8 @@ def export_history(request):
     from_date = request.GET.get('fromDate')
     to_date = request.GET.get('toDate')
     lab = request.GET.get('lab', 'all')
+
+    # print(from_date, to_date, lab)
 
     # Filter transactions based on the provided filters
     transactions = Transaction.objects.all()
@@ -307,8 +322,8 @@ def export_history(request):
     ws = wb.active
     ws.title = 'Transaction History'
 
-    # Write the header
-    headers = ['Lab', 'Name', 'Reg.No.', 'Equipment','Treated for', 'Borrow Time', 'Return Time', 'Status']
+
+    headers = ['Lab', 'Name', 'Reg.No.', 'Instrument','Treated for', 'Borrow Time', 'Return Time', 'Status']
     ws.append(headers)
 
     # Write the data
@@ -520,7 +535,7 @@ def Add_Equipment(request):
             equipment = form.save(commit=False)
             equipment.lab = request.user
             equipment.available_count = equipment.count
-            messages.success(request, 'Equipment added successfully.')
+            messages.success(request, 'Instrument added successfully.')
             equipment.save()
             return redirect('equipments-list')
     else:
@@ -543,7 +558,7 @@ def Edit_Equipment(request, pk):
                 equipment.available_count = max(equipment.available_count + difference, 0)
 
             equipment.save()
-            messages.success(request, 'Equipment edited successfully.')
+            messages.success(request, 'Instrument edited successfully.')
             return redirect('equipments-list')
     else:
         form = EquipmentForm(instance=equipment)
@@ -560,7 +575,7 @@ def Delete_Equipment(request, pk):
             return JsonResponse({'status': 'success'}, status=200)
         else:
             # Handle traditional POST request
-            messages.success(request, 'Equipment deleted successfully.')
+            messages.success(request, 'Instrument deleted successfully.')
             return redirect('equipments-list')
     return redirect('equipments-list')
 
@@ -570,9 +585,24 @@ def Search_Equipment(request):
         search_str = json.loads(request.body).get('searchText')
         equipment = Equipment.objects.filter(count__istartswith=search_str, lab=request.user) | Equipment.objects.filter(
             name__icontains=search_str, lab=request.user) | Equipment.objects.filter(category__icontains=search_str, lab=request.user)
-        data = equipment.values()
+        kits = MedicalKit.objects.filter(kitName__icontains=search_str, lab=request.user) 
+        
+        equipment_data = list(equipment.values())
+        kit_data = []
+        for kit in kits:
+            kit_data.append({
+                'id': kit.id,
+                'kitName': kit.kitName,
+                'lab': kit.lab.username if kit.lab else None,
+                'equipments': ', '.join(equipment.name for equipment in kit.equipment.all())
+            })
 
-        return JsonResponse(list(data), safe=False)
+        data = {
+            'equipment': equipment_data,
+            'kit': kit_data
+        }
+
+        return JsonResponse(data, safe=False)
 
 # Medical Kit
 @user_passes_test_custom(is_user, 'dashboard-index')
@@ -596,11 +626,11 @@ def Add_MedicalKit(request):
                 equipment_objects = Equipment.objects.filter(id__in=equipment_ids)
                 medical_kit.equipment.set(equipment_objects)
 
-            messages.success(request, 'Medical Kit added successfully.')
+            messages.success(request, 'Instrument Kit added successfully.')
             return redirect('equipments-list')
 
         except Exception as e:
-            messages.error(request, f"Error adding Medical Kit: {str(e)}")
+            messages.error(request, f"Error adding Instrument Kit: {str(e)}")
 
     else:
         items = Equipment.objects.filter(lab=request.user).order_by(Coalesce(F('order'), Value('99999')), 'order')
@@ -630,11 +660,11 @@ def Edit_MedicalKit(request, kit_id):
             equipment_objects = Equipment.objects.filter(id__in=equipment_ids)
             medical_kit.equipment.set(equipment_objects)
 
-            messages.success(request, 'Medical kit updated successfully!')
+            messages.success(request, 'Instrument kit updated successfully!')
             return redirect('equipments-list')
 
         except Exception as e:
-            messages.error(request, f"Medical Kit not updated: {str(e)}")
+            messages.error(request, f"Instrument Kit not updated: {str(e)}")
 
     else:
         items = Equipment.objects.filter(lab=request.user).order_by(Coalesce(F('order'), Value('99999')), 'order')
@@ -650,15 +680,23 @@ def Edit_MedicalKit(request, kit_id):
 
 @user_passes_test_custom(is_user, 'dashboard-index')
 def Delete_MedicalKit(request, pk):
-    medical_kit = get_object_or_404(MedicalKit, pk=pk)
-    if request.method == 'POST':
-        medical_kit.delete()
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'status': 'success'}, status=200)
-        else:
-            messages.success(request, 'Medical Kit deleted successfully.')
-            return redirect('equipments-list')
-    return redirect('equipments-list')
+    try:
+        medical_kit = get_object_or_404(MedicalKit, pk=pk)
+        
+        if request.method == 'POST':
+            medical_kit.delete()
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'success'}, status=200)
+            else:
+                messages.success(request, 'Instrument Kit deleted successfully.')
+                return redirect('equipments-list')
+                
+        return JsonResponse({'status': 'failure', 'message': 'Invalid request method'}, status=400)
+    
+    except MedicalKit.DoesNotExist:
+        return JsonResponse({'status': 'failure', 'message': 'Instrument Kit not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 
 # 
@@ -750,6 +788,7 @@ def Update_Order(request):
 
         return JsonResponse({'success': True})
     return JsonResponse({'success': False}, status=400)
+
 
 # 
 # Students

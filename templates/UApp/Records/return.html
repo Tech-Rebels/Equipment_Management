@@ -1,12 +1,12 @@
 {% extends 'partials/base.html'%}
 {% load static %}
 {% block title %}Return{% endblock %}
-{% block description %}Return borrowed equipment{% endblock %}
+{% block description %}Return borrowed Instrument{% endblock %}
 
 {% block content %}
 <!-- top bar -->
 <div class="d-flex justify-content-between flex-wrap flex-md nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Return Equipment</h1>
+    <h1 class="h2">Return Instrument</h1>
     <div class="btn-toolbar mb-2 mb-md 0">
         <div class="btn-group me-2">
             <button id="rescanButton" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i>
@@ -49,8 +49,9 @@
                     <table class="table table-hover table-sm" id="borrowed-list">
                         <thead>
                             <tr>
-                                <th scope="col">Equipment</th>
+                                <th scope="col">Instrument</th>
                                 <th scope="col">Borrowed time</th>
+                                <th scope="col">Select</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -110,7 +111,7 @@
                         tbody.empty();
                         if (borrowedItems.length > 0) {
                             $('#borrowedItems').show();
-                            $('#submitButton').prop('disabled', false);
+                            $('#submitButton').prop('disabled', true);
                             borrowedItems.forEach(function (item) {
                                 var borrowedAt = new Date(item.borrowed_at);
                                 var hours = borrowedAt.getHours();
@@ -124,14 +125,31 @@
                                 var equipmentCell = $('<td></td>').text(item.equipment__name);
                                 var timeCell = $('<td></td>').text(formattedTime);
 
-                                row.append(equipmentCell, timeCell);
+                                var checkboxCell = $('<td></td>').append(
+                                    $('<input type="checkbox" class="form-check-input borrowed-checkbox" name="selected_items" value="' + item.equipment__id + '">')
+                                );
+
+                                row.append(equipmentCell, timeCell, checkboxCell);
                                 tbody.append(row);
+
+                                row.click(function (e) {
+                                    if (e.target.tagName !== 'INPUT') { 
+                                        var checkbox = $(this).find('.borrowed-checkbox');
+                                        checkbox.prop('checked', !checkbox.prop('checked')); 
+                                        checkAllCheckboxes(); 
+                                    }
+                                });
+
+                                row.find('.borrowed-checkbox').change(function () {
+                                    checkAllCheckboxes();
+                                });
                             });
+
                         } else {
                             $('#borrowedItems').show();
                             $('#submitButton').prop('disabled', true);
                             var noItemsRow = $('<tr class="align-middle"></tr>');
-                            var noItemsCell = $('<td colspan="2"></td>').text('No equipment to return.');
+                            var noItemsCell = $('<td colspan="2"></td>').text('No instrument to return.');
                             noItemsRow.append(noItemsCell);
                             tbody.append(noItemsRow);
                         }
@@ -144,6 +162,21 @@
                     alert('Error occurred. Please try again.');
                 }
             });
+        }
+    }
+
+    function checkAllCheckboxes() {
+        var allChecked = true;
+        $('.borrowed-checkbox').each(function () {
+            if (!$(this).is(':checked')) {
+                allChecked = false;
+            }
+        });
+
+        if (allChecked) {
+            $('#submitButton').prop('disabled', false);
+        } else {
+            $('#submitButton').prop('disabled', true);
         }
     }
 
@@ -201,7 +234,7 @@
 
         $('#proceedButton').click(function () {
             if ($('#equipment_name option').length === 0) {
-                alert('No equipment available.');
+                alert('No Instrument available.');
             } else {
                 $('#borrowedItems').hide();
                 $('#submitButton').prop('disabled', false);

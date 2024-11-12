@@ -1,6 +1,6 @@
 {% extends 'partials/base.html'%}
 {% block title %}DIMS Dashboard{% endblock %}
-{% block description %}Dashboard for user to view Equipments detail{% endblock %}
+{% block description %}Dashboard for user to view Instruments detail{% endblock %}
 
 
 {% block content %}
@@ -25,7 +25,7 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col">
-                        <span class="h6 font-semibold text-muted text-sm d-block mb-2">Total Equipment</span>
+                        <span class="h6 font-semibold text-muted text-sm d-block mb-2">Total Instrument</span>
                         <span class="h3 font-bold mb-0">
                             <!-- total count --> {{total_equipment_count}}
                         </span>
@@ -46,7 +46,7 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col">
-                        <span class="h6 font-semibold text-muted text-sm d-block mb-2">Equipment taken</span>
+                        <span class="h6 font-semibold text-muted text-sm d-block mb-2">Instrument taken</span>
                         <span class="h3 font-bold mb-0">
                             {{borrowed_count}}
                         </span>
@@ -66,7 +66,7 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col">
-                        <span class="h6 font-semibold text-muted text-sm d-block mb-2">Equipment returned</span>
+                        <span class="h6 font-semibold text-muted text-sm d-block mb-2">Instrument returned</span>
                         <span class="h3 font-bold mb-0">
                             {{returned_count}}
                         </span>
@@ -86,7 +86,7 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col">
-                        <span class="h6 font-semibold text-muted text-sm d-block mb-2">Equipment Pending</span>
+                        <span class="h6 font-semibold text-muted text-sm d-block mb-2">Instrument Pending</span>
                         <span class="h3 font-bold mb-0">
                             {{not_returned_count}}
                         </span>
@@ -151,7 +151,7 @@
                 <tr>
                     <th scope="col">Name</th>
                     <th scope="col">Reg.No.</th>
-                    <th scope="col">Equipment</th>
+                    <th scope="col">Instrument</th>
                     <th scope="col">Borrow Time</th>
                     <th scope="col">Status</th>
                 </tr>

@@ -1,7 +1,7 @@
 {% extends 'partials/base.html'%}
 {% load static %}
 {% block title %}Create{% endblock %}
-{% block description %}New equipment borrow{% endblock %}
+{% block description %}New Instrument borrow{% endblock %}
 
 {% block content %}
 <!-- css -->
@@ -23,7 +23,7 @@
 </style>
 
 <div class="d-flex justify-content-between flex-wrap flex-md nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Borrow Equipment</h1>
+    <h1 class="h2">Borrow Instrument</h1>
     <div class="btn-toolbar mb-2 mb-md 0">
         <div class="btn-group me-2">
             <button id="rescanButton" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i>
@@ -38,7 +38,7 @@
 <!-- caution message -->
 <div id="borrowedItems" class="messages mt-1 position-absolute" style="top:8vh; left:40vw; display:none;">
     <div class="alert alert-sm alert-danger alert-dismissible fade show" role="alert">
-        <h5>Student not returned some equipments</h5>
+        <h5>Student not returned some Instruments</h5>
         <h6>Borrowed Items:</h6>
         <ul id="borrowedItemsList"></ul>
         <a href="{% url 'dashboard-index' %}" class="btn btn-sm btn-primary">Cancel</a>
@@ -72,7 +72,7 @@
         <div class="col">
             <link rel="stylesheet" href="{% static '/select/css/multi-select-tag.css' %}" />
             <script src="{% static '/select/js/multi-select-tag.js' %}"></script>
-            <label for="equipment_name">Select Equipments</label>
+            <label for="equipment_name">Select Instruments</label>
             <div class="d-flex flex-row gap-2">
                 <select name="equipment[]" id="equipment_name" multiple required>
                     <!-- Equipment options will be populated dynamically -->

@@ -74,7 +74,7 @@
                     <th scope="col">Lab</th>
                     <th scope="col">Name</th>
                     <th scope="col">Reg.No.</th>
-                    <th scope="col">Equipment</th>
+                    <th scope="col">Instrument</th>
                     <th scope="col">Treated for</th>
                     <th scope="col">Borrow Time</th>
                     <th scope="col">Return Time</th>
@@ -116,7 +116,8 @@
                     <th scope="col">Lab</th>
                     <th scope="col">Name</th>
                     <th scope="col">Reg.No.</th>
-                    <th scope="col">Equipment</th>
+                    <th scope="col">Instrument</th>
+                    <th scope="col">Treated for</th>
                     <th scope="col">Borrow Time</th>
                     <th scope="col">Return Time</th>
                     <th scope="col">Status</th>
@@ -191,6 +192,7 @@
                                 <td>${item.student__name}</td>
                                 <td>${item.student__regno}</td>
                                 <td>${item.equipment__name}</td>
+                                <td>${item.treatment__name}</td>
                                 <td>${formattedBorrowedAt}</td>
                                 <td>${formattedReturnedAt}</td>
                                 <td class="${item.status? 'text-success' : 'text-danger'}">${item.status ? 'Returned' : 'Not Returned'}</td>

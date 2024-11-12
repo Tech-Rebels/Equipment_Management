@@ -1,7 +1,7 @@
 {% extends 'partials/base.html'%}
 {% load static %}
-{% block title %}Equipments{% endblock %}
-{% block description %}equipments list{% endblock %}
+{% block title %}Instruments{% endblock %}
+{% block description %}Instruments list{% endblock %}
 
 {% block content %}
 
@@ -13,15 +13,15 @@
 
 <!-- top bar -->
 <div class="d-flex justify-content-between flex-wrap flex-md nowrap align-items-center pt-3 pb-2 mb-2 border-bottom">
-    <h1 class="h2">Equipments List</h1>
+    <h1 class="h2">Instruments List</h1>
     <form class="d-flex" role="search">
-        <input class="form-control" id="searchfield" type="search" placeholder="Search" aria-label="Search">
+        <input class="form-control" id="searchfield" type="search" placeholder="Search" aria-label="Search" style="width: 19vw;">
         <!-- <button class="btn btn-sm btn-outline-secondary custom-btn" type="submit">Reset</button> -->
     </form>
     <div class="btn-toolbar mb-2 mb-md 0">
         <div class="btn-group me-2">
-            <a href="{% url 'add-medicalKit' %}" class="btn btn-sm btn-outline-secondary">+ Add Medical Kit&nbsp;</a>
-            <a href="{% url 'add-equipment' %}" class="btn btn-sm btn-outline-success">+ Add Equipment&nbsp;</a>
+            <a href="{% url 'add-medicalKit' %}" class="btn btn-sm btn-outline-secondary">+ Add Instrument Kit&nbsp;</a>
+            <a href="{% url 'add-equipment' %}" class="btn btn-sm btn-outline-success">+ Add Instrument&nbsp;</a>
         </div>
     </div>
 </div>
@@ -30,10 +30,10 @@
 <div class="d-flex justify-content-center flex-wrap flex-md nowrap align-items-center pb-2">
     <div class="btn-group" role="group" aria-label="Basic radio toggle button group" style="margin-left: -2.6vw;">
         <input type="radio" class="btn-check" name="btnradio" id="equipmentRadio" autocomplete="off" checked>
-        <label class="btn btn-outline-primary" for="equipmentRadio">Equipments</label>
+        <label class="btn btn-outline-primary" for="equipmentRadio">Instruments</label>
 
         <input type="radio" class="btn-check" name="btnradio" id="medkitRadio" autocomplete="off">
-        <label class="btn btn-outline-primary" for="medkitRadio">Medical Kit</label>
+        <label class="btn btn-outline-primary" for="medkitRadio">Instrument Kit</label>
     </div>
 </div>
 
@@ -99,7 +99,7 @@
             </tbody>
         </table>
         {% else %}
-        <h5 class="mb-3">No equipment is there in lab</h5>
+        <h5 class="mb-3">No Instrument is there in lab</h5>
         {% endif %}
     </div>
 
@@ -128,13 +128,13 @@
 
 <!-- Medical Kit table -->
 <div class="card shadow-sm border-0 p-3 pb-0 mt-1" id="medkitTable" style="display: none;">
-    <div class="table-responsive app-table">
+    <div class="table-responsive kit-app-table">
         {% if items %}
         <table class="table table-hover table-sm">
             <thead>
                 <tr>
                     <th scope="col">Kit Name</th>
-                    <th scope="col">Equipments</th>
+                    <th scope="col">Instruments</th>
                     <!-- <th scope="col">Order</th> -->
                     <th scope="col" class="text-end">Action</th>
                 </tr>
@@ -183,6 +183,22 @@
         <h5 class="mb-3">No Medical Kit is there in lab</h5>
         {% endif %}
     </div>
+
+    <!-- search table -->
+    <div class="kit-table-output" style="display: none;">
+        <table class="table table-hover table-sm">
+            <thead>
+                <tr>
+                    <th scope="col">Kit Name</th>
+                    <th scope="col">Instruments</th>
+                    <!-- <th scope="col">Order</th> -->
+                    <th scope="col" class="text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody id="kit-search-results">
+            </tbody>
+        </table>
+    </div>
 </div>
 
 
@@ -190,14 +206,14 @@
 <script>
     function confirmDeletion(button) {
         const equipmentId = button.getAttribute('data-id');
-        if (confirm("Are you sure you want to delete this equipment?")) {
+        if (confirm("Are you sure you want to delete this Instrument?")) {
             document.getElementById('delete-form-' + equipmentId).submit();
         }
     }
 
     function confirmKitDeletion(button) {
         const kitId = button.getAttribute('data-id');
-        if (confirm("Are you sure you want to delete this medical kit?")) {
+        if (confirm("Are you sure you want to delete this Instrument kit?")) {
             document.getElementById('delete-kit-form-' + kitId).submit();
         }
     }
@@ -206,7 +222,7 @@
     function confirmDeletion2(button) {
         const equipmentId = button.getAttribute('data-id');
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        if (confirm("Are you sure you want to delete this equipment?")) {
+        if (confirm("Are you sure you want to delete this Instrument?")) {
             fetch(`/equipment/delete/${equipmentId}/`, {
                 method: 'POST',
                 headers: {
@@ -246,68 +262,147 @@
         }
     }
 
+    function confirmKitDeletion2(button) {
+    const medicalKitId = button.getAttribute('data-id');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    if (confirm("Are you sure you want to delete this Instrument Kit2?")) {
+        fetch(`/equipments/medical-kit/delete/${medicalKitId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({ id: medicalKitId })
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('Something went wrong');
+            }
+        })
+        .then(data => {
+            console.log(data);
+            if (data.status === 'success') {
+                window.location.reload();
+                // Optionally, remove the medical kit item from the DOM
+                // const itemElement = button.closest('tr');
+                // if (itemElement) {
+                //     itemElement.remove();
+                // } else {
+                //     console.error('No element found to remove');
+                // }
+            } else {
+                // Handle failure
+                console.error('Deletion was not successful');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+}
+
+
 </script>
 
 <!-- search -->
 <script>
     const searchfield = document.querySelector("#searchfield");
-    const tableoutput = document.querySelector(".table-output");
-    const apptable = document.querySelector(".app-table");
-    const page = document.querySelector(".page");
-    const searchResults = document.querySelector("#search-results");
+const tableoutput = document.querySelector(".table-output");
+const apptable = document.querySelector(".app-table");
+const kitapptable = document.querySelector(".kit-app-table");
+const searchResults = document.querySelector("#search-results");
 
-    searchfield.addEventListener("keyup", (e) => {
-        const searchValue = e.target.value;
+const kitTableOutput = document.querySelector(".kit-table-output");
+const kitSearchResults = document.querySelector("#kit-search-results");
 
-        if (searchValue.length > 0) {
-            fetch("{% url 'search-equipment' %}", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": "{{ csrf_token }}",
-                },
-                body: JSON.stringify({ searchText: searchValue }),
-            })
-                .then((res) => res.json())
-                .then((data) => {
-                    apptable.style.display = "none";
-                    page.style.display = "none";
-                    tableoutput.style.display = "block";
-                    searchResults.innerHTML = "";
+searchfield.addEventListener("keyup", (e) => {
+    const searchValue = e.target.value;
 
-                    if (data.length === 0) {
-                        searchResults.innerHTML = "<tr><td colspan='6'>No result found</td></tr>";
-                    } else {
-                        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                        data.forEach((item) => {
-                            searchResults.innerHTML += `
-                        <tr class="align-middle">
-                            <td>${item.name}</td>
-                            <td>${item.count}</td>
-                            <td>${item.available_count}</td>
-                            <td>${item.category}</td>
-                            <td class="text-end">
-                                <div class="d-flex flex-row justify-content-end gap-2">
-                                    <a href="/equipment/edit/${item.id}" type="button" class="btn btn-primary btn-small">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    <form id="delete-form-${item.id}" action="/equipment/delete/${item.id}/" method="post" class="position-relative">
-                                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-                                        <button type="button" data-id="${item.id}" onclick="confirmDeletion2(this)" class="btn btn-danger btn-small"><i class="bi bi-trash"></i></button>
-                                    </form>
+    if (searchValue.length > 0) {
+        fetch("{% url 'search-equipment' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}",
+            },
+            body: JSON.stringify({ searchText: searchValue }),
+        })
+        .then((res) => res.json())
+        .then((data) => {
+            // Hide the main table
+            apptable.style.display = "none";
+            kitapptable.style.display = "none";
 
-                                </div>
-                            </td>
-                        </tr>`;
-                        });
-                    }
+            // Show the output tables
+            tableoutput.style.display = "block";
+            kitTableOutput.style.display = "block";
+
+            // Clear previous search results
+            searchResults.innerHTML = "";
+            kitSearchResults.innerHTML = "";
+
+            // Handle equipment search results
+            if (data.equipment.length === 0) {
+                searchResults.innerHTML = "<tr><td colspan='6'>No result found</td></tr>";
+            } else {
+                data.equipment.forEach((item) => {
+                    searchResults.innerHTML += `
+                    <tr class="align-middle">
+                        <td>${item.name}</td>
+                        <td>${item.count}</td>
+                        <td>${item.available_count}</td>
+                        <td>${item.category}</td>
+                        <td class="text-end">
+                            <div class="d-flex flex-row justify-content-end gap-2">
+                                <a href="/equipment/edit/${item.id}/" type="button" class="btn btn-primary btn-small">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form id="delete-form-${item.id}" action="/equipment/delete/${item.id}/" method="post" class="position-relative">
+                                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                                    <button type="button" data-id="${item.id}" onclick="confirmDeletion2(this)" class="btn btn-danger btn-small"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>`;
                 });
-        } else {
-            tableoutput.style.display = "none";
-            apptable.style.display = "block";
-            page.style.display = "block";
-        }
-    });
+            }
+
+            // Handle medical kit search results
+            if (data.kit.length === 0) {
+                kitSearchResults.innerHTML = "<tr><td colspan='6'>No result found</td></tr>";
+            } else {
+                data.kit.forEach((kit) => {
+                    kitSearchResults.innerHTML += `
+                    <tr class="align-middle">
+                        <td>${kit.kitName}</td>
+                        <td>${kit.equipments}</td> <!-- Assuming you want to list the equipments in the kit -->
+                        <td class="text-end">
+                            <div class="d-flex flex-row justify-content-end gap-2">
+                                <a href="/equipments/medical-kit/edit/${kit.id}/" type="button" class="btn btn-primary btn-small">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form id="delete-kit-form-${kit.id}" action="/equipments/medical-kit/delete/${kit.id}/" method="post" class="position-relative">
+                                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                                    <button type="button" data-id="${kit.id}" onclick="confirmKitDeletion2(this)" class="btn btn-danger btn-small"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>`;
+                });
+            }
+        });
+    } else {
+        // Hide the output tables if no search input
+        tableoutput.style.display = "none";
+        kitTableOutput.style.display = "none";
+        apptable.style.display = "block";
+        kitapptable.style.display = "block";
+    }
+});
 
 
     // sortable
@@ -362,16 +457,20 @@
         const equipmentTable = document.getElementById('equipmentTable');
         const medkitTable = document.getElementById('medkitTable');
 
-        // Add event listeners for the radio buttons
-        equipmentRadio.addEventListener('click', function () {
-            equipmentTable.style.display = 'block';
-            medkitTable.style.display = 'none';
-        });
+        if (equipmentRadio && medkitRadio && equipmentTable && medkitTable) {
+            // Add event listeners for the radio buttons
+            equipmentRadio.addEventListener('click', function() {
+                equipmentTable.style.display = 'block';
+                medkitTable.style.display = 'none';
+            });
 
-        medkitRadio.addEventListener('click', function () {
-            equipmentTable.style.display = 'none';
-            medkitTable.style.display = 'block';
-        });
+            medkitRadio.addEventListener('click', function() {
+                equipmentTable.style.display = 'none';
+                medkitTable.style.display = 'block';
+            });
+        } else {
+            console.error("One or more required elements are missing from the page.");
+        }
     }); 
 </script>
 

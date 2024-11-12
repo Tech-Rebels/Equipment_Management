@@ -1,6 +1,6 @@
 {% extends 'partials/base.html'%}
 {% block title %}DIMS Dashboard{% endblock %}
-{% block description %}Dashboard for user to view Equipments detail{% endblock %}
+{% block description %}Dashboard for user to view Instruments detail{% endblock %}
 
 
 {% block content %}
@@ -33,7 +33,7 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col">
-                        <span class="h6 font-semibold text-muted text-sm d-block mb-2">Total Equipment</span>
+                        <span class="h6 font-semibold text-muted text-sm d-block mb-2">Total Instrument</span>
                         <span class="h3 font-bold mb-0">
                             <!-- total count --> {{total_equipment_count}}
                         </span>
@@ -54,7 +54,7 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col">
-                        <span class="h6 font-semibold text-muted text-sm d-block mb-2">Equipment taken</span>
+                        <span class="h6 font-semibold text-muted text-sm d-block mb-2">Instrument taken</span>
                         <span class="h3 font-bold mb-0">
                             {{borrowed_count}}
                         </span>
@@ -74,7 +74,7 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col">
-                        <span class="h6 font-semibold text-muted text-sm d-block mb-2">Equipment returned</span>
+                        <span class="h6 font-semibold text-muted text-sm d-block mb-2">Instrument returned</span>
                         <span class="h3 font-bold mb-0">
                             {{returned_count}}
                         </span>
@@ -94,7 +94,7 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col">
-                        <span class="h6 font-semibold text-muted text-sm d-block mb-2">Equipment Pending</span>
+                        <span class="h6 font-semibold text-muted text-sm d-block mb-2">Instrument Pending</span>
                         <span class="h3 font-bold mb-0">
                             {{not_returned_count}}
                         </span>
@@ -109,6 +109,7 @@
             </div>
         </div>
     </div>
+
     <!-- <div class="col-xl-3 col-sm-6 col-12 mb-2">
         <div class="card shadow-sm border-0">
             <div class="card-body">
@@ -159,9 +160,20 @@
                 <tr>
                     <th scope="col">Name</th>
                     <th scope="col">Reg.No.</th>
-                    <th scope="col">Equipment</th>
+                    <th scope="col">Instrument</th>
                     <th scope="col">Borrow Time</th>
-                    <th scope="col">Status</th>
+                    <!-- <th scope="col">Status</th> -->
+                    <th scope="col" class="position-relative" style="padding-right: 0; white-space: nowrap;">
+                        <span style="padding-right: 60px;"">Status</span>
+                        <form method="GET" style="position: absolute; top: 0px; right: 0px; margin: 0;">
+                            <select name="status" class="form-select form-select-sm" style="width: auto;font-size: 0.9em;" onchange="this.form.submit()">
+                                <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All</option>
+                                <option value="returned" {% if status_filter == 'returned' %}selected{% endif %}>Returned</option>
+                                <option value="not_returned" {% if status_filter == 'not_returned' %}selected{% endif %}>Not Returned</option>
+                            </select>
+                        </form>
+                    </th>
+                    
                 </tr>
             </thead>
             <tbody>
