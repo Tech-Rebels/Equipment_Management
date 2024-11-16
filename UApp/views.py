@@ -79,6 +79,9 @@ def index(request):
         borrowed_count = borrowed_count_data['total'] or 0
         not_returned_count = not_returned_count_data['total'] or 0
         returned_count = borrowed_count - not_returned_count
+        pending_count_data = Transaction.objects.filter(handled_by=request.user, status=False).annotate(equipment_count=Count('equipment')).aggregate(total=Sum('equipment_count'))
+        pending_count = pending_count_data['total'] or 0
+        transactions_count = Transaction.objects.filter(handled_by=request.user, borrowed_at__date=today).count()
 
         # status filter logic
         status_filter = request.GET.get('status', 'all')  # 'all' by default if no status filter is selected
@@ -102,13 +105,20 @@ def index(request):
         except EmptyPage:
             items = paginator.page(paginator.num_pages)
 
+        # past dates not returned
+        past_not_returned_items = Transaction.objects.filter(
+            handled_by=request.user, status=False, borrowed_at__date__lt=today).order_by('borrowed_at')
+
         context = {
             'items': items,
             'total_equipment_count': total_equipment_count['count__sum'] or 0,
             'borrowed_count': borrowed_count,
             'not_returned_count': not_returned_count,
             'returned_count': returned_count,
-            'status_filter': status_filter
+            'pending_count': pending_count,
+            'status_filter': status_filter,
+            'transactions_count': transactions_count,
+            'past_not_returned_items': past_not_returned_items
         }
         return render(request, 'UApp/index.html', context)
     elif request.user.is_staff:
@@ -129,9 +139,26 @@ def admin_dashboard(request, pk):
     borrowed_count = borrowed_count_data['total'] or 0
     not_returned_count = not_returned_count_data['total'] or 0
     returned_count = borrowed_count - not_returned_count
+    pending_count_data = Transaction.objects.filter(handled_by=lab, status=False).annotate(equipment_count=Count('equipment')).aggregate(total=Sum('equipment_count'))
+    pending_count = pending_count_data['total'] or 0
+    transactions_count = Transaction.objects.filter(handled_by=lab, borrowed_at__date=today).count()
 
-    # table data
-    transactions_list = Transaction.objects.filter(handled_by=lab, borrowed_at__date=today).order_by('status','-borrowed_at') # , borrowed_at__date=today
+    # table data - without status
+    # transactions_list = Transaction.objects.filter(handled_by=lab, borrowed_at__date=today).order_by('status','-borrowed_at') # , borrowed_at__date=today
+    
+    # status filter logic
+    status_filter = request.GET.get('status', 'all')  # 'all' by default if no status filter is selected
+    if status_filter == 'returned':
+        transactions_list = Transaction.objects.filter(handled_by=lab, status=True, borrowed_at__date=today)
+    elif status_filter == 'not_returned':
+        transactions_list = Transaction.objects.filter(handled_by=lab, status=False, borrowed_at__date=today)
+    else:
+        transactions_list = Transaction.objects.filter(handled_by=lab, borrowed_at__date=today)
+
+    transactions_list = transactions_list.order_by('status', 'borrowed_at')
+
+
+    # pagination
     no_of_items = 13
     paginator = Paginator(transactions_list, no_of_items)
     page = request.GET.get('page')
@@ -142,13 +169,21 @@ def admin_dashboard(request, pk):
     except EmptyPage:
         items = paginator.page(paginator.num_pages)
 
+    # past dates not returned
+    past_not_returned_items = Transaction.objects.filter(
+        handled_by=lab, status=False, borrowed_at__date__lt=today).order_by('borrowed_at')
+
     context = {
         'lab' : lab,
         'items': items,
         'total_equipment_count': total_equipment_count['count__sum'] or 0,
         'borrowed_count': borrowed_count,
         'not_returned_count': not_returned_count,
-        'returned_count': returned_count
+        'status_filter': status_filter,
+        'returned_count': returned_count,
+        'pending_count': pending_count,
+        'transactions_count': transactions_count,
+        'past_not_returned_items': past_not_returned_items
     }
     return render(request, 'UApp/Admin/dashboard.html', context)
 
@@ -200,7 +235,8 @@ def history_filter(request):
             transactions = transactions.filter(
                 Q(studentName__icontains=search_str) |
                 Q(studentRegno__icontains=search_str) |
-                Q(equipmentName__icontains=search_str)
+                Q(equipmentName__icontains=search_str) |
+                Q(treatmentName__icontains=search_str)
             ).distinct()
 
         if from_date_str:
@@ -260,6 +296,7 @@ def admin_history_filter(request):
         from_date_str = data.get('fromDate', '')
         to_date_str = data.get('toDate', '')
         lab_filter = data.get('lab', 'all')
+        return_status = data.get('returnStatus', 'all')
 
         transactions = Transaction.objects.all()
 
@@ -268,6 +305,7 @@ def admin_history_filter(request):
                 Q(studentName__icontains=search_str) |
                 Q(studentRegno__icontains=search_str) |
                 Q(equipmentName__icontains=search_str) |
+                Q(treatmentName__icontains=search_str) |
                 Q(labName__icontains=search_str)
             ).distinct()
 
@@ -281,6 +319,9 @@ def admin_history_filter(request):
 
         if lab_filter != 'all':
             transactions = transactions.filter(handled_by__username=lab_filter)
+        
+        if return_status != 'all':
+            transactions = transactions.filter(status=(return_status == 'returned'))
 
         data = []
         for transaction in transactions:
@@ -303,19 +344,41 @@ def admin_history_filter(request):
 def export_history(request):
     from_date = request.GET.get('fromDate')
     to_date = request.GET.get('toDate')
-    lab = request.GET.get('lab', 'all')
+    search_str = request.GET.get('search', '')
+    lab = request.GET.get('dropdownSelect', 'all')
+    return_status = request.GET.get('returndropdownSelect', 'all')
 
-    # print(from_date, to_date, lab)
+    # print(from_date, to_date, search_str, lab, return_status)
 
     # Filter transactions based on the provided filters
     transactions = Transaction.objects.all()
+
+    if search_str:
+            transactions = transactions.filter(
+                Q(studentName__icontains=search_str) |
+                Q(studentRegno__icontains=search_str) |
+                Q(equipmentName__icontains=search_str) |
+                Q(treatmentName__icontains=search_str) |
+                Q(labName__icontains=search_str)
+            ).distinct()
 
     if from_date:
         transactions = transactions.filter(borrowed_at__date__gte=from_date)
     if to_date:
         transactions = transactions.filter(borrowed_at__date__lte=to_date)
-    if lab != 'all':
-        transactions = transactions.filter(handled_by__username=lab)
+    # if lab != 'all':
+    #     transactions = transactions.filter(handled_by__username=lab)
+    if request.user.is_staff:
+        if lab != 'all':
+            transactions = transactions.filter(handled_by__username=lab)
+    else:
+        transactions = transactions.filter(handled_by__username=request.user.username)
+    
+
+    if return_status == 'returned':
+        transactions = transactions.filter(status=True)
+    elif return_status == 'notreturned':
+        transactions = transactions.filter(status=False)
 
     # Create a workbook and sheet
     wb = openpyxl.Workbook()
@@ -398,7 +461,8 @@ def Borrow_Equipment(request):
 
                     if existing_transaction:
                         existing_transaction.equipment.add(*equipment_objects)
-                        existing_transaction.treatment.add(*treatment_objects)
+                        # existing_transaction.treatment.add(*treatment_objects)
+                        existing_transaction.treatment.set(treatment_objects)
                         existing_transaction.borrowed_at = timezone.localtime()
                         existing_transaction.save()
                         messages.success(request, 'Equipment/Medkit added to existing transaction successfully.')
@@ -484,10 +548,12 @@ def get_student_details(request):
 
             borrowed_equipment_ids = transactions.values_list('equipment', flat=True)
             borrowed_treatment_ids = transactions.values_list('treatment', flat=True)
+            previously_selected_treatments = transactions.values_list('treatment__treatment', flat=True)
 
             available_equipment = Equipment.objects.filter(lab=request.user, available_count__gt=0).exclude(id__in=borrowed_equipment_ids).order_by(Coalesce('order', Value(float('inf'))).asc()).values_list('name', flat=True)
             available_medkits = MedicalKit.objects.filter(lab=request.user).exclude(Q(equipment__available_count__lte=0) | Q(equipment__id__in=borrowed_equipment_ids)).order_by(Coalesce('order', Value(float('inf'))).asc()).values_list('kitName', flat=True)  
-            treatment = Treatment.objects.filter(lab=request.user).exclude(id__in=borrowed_treatment_ids).order_by(Coalesce('order', Value(float('inf'))).asc()).values_list('treatment', flat=True)  
+            # treatment = Treatment.objects.filter(lab=request.user).exclude(id__in=borrowed_treatment_ids).order_by(Coalesce('order', Value(float('inf'))).asc()).values_list('treatment', flat=True)  
+            treatment = Treatment.objects.filter(lab=request.user).order_by(Coalesce('order', Value(float('inf'))).asc()).values_list('treatment', flat=True)  
 
             student_data = {
                 'name': student.name,
@@ -495,6 +561,7 @@ def get_student_details(request):
                 'image_url': student.image.url,
                 'borrowed_items': borrowed_items,
                 'available_equipment': list(available_medkits) + list(available_equipment),
+                'borrowed_treatment_ids': list(previously_selected_treatments),
                 'treatment' : list(treatment)
             }
             return JsonResponse({'success': True, 'student': student_data})

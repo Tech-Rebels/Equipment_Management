@@ -7,12 +7,6 @@
 <!-- topbar -->
 <div class="d-flex justify-content-between flex-wrap flex-md nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">Dashboard : {{lab.username}}</h1>
-    <!-- <div class="btn-toolbar mb-2 mb-md 0">
-        <div class="btn-group me-2">
-            <a href="{% url 'return-equipment' %}" class="btn btn-md btn-outline-primary">- Return</a>
-            <a href="{% url 'borrow-equipment' %}" class="btn btn-md btn-outline-success">+ Create</a>
-        </div>
-    </div> -->
 </div>
 
 <!-- messages -->
@@ -88,7 +82,8 @@
                     <div class="col">
                         <span class="h6 font-semibold text-muted text-sm d-block mb-2">Instrument Pending</span>
                         <span class="h3 font-bold mb-0">
-                            {{not_returned_count}}
+                            <!-- {{not_returned_count}} -->
+                            {{pending_count}}
                         </span>
                     </div>
                     <div class="col-auto d-flex align-items-center justify-content-center">
@@ -101,63 +96,25 @@
             </div>
         </div>
     </div>
-    <!-- <div class="col-xl-3 col-sm-6 col-12 mb-2">
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-                <div class="col">
-                    <form action="/" method="POST">
-                        <div class="row form-group">
-                            <div class="col">
-                                <label for="sortby" class="h6 font-semibold text-muted text-sm d-block mb-1">Sort
-                                    by</label>
-                                <div class="d-flex flex-row gap-2">
-                                    <select class="form-select mr-1" name="sortby" id="sortby">
-                                        <option value="regNumber" selected>Register Number</option>
-                                        <option value="insExpDate">Insurance</option>
-                                        <option value="homeTaxExpDate">Home Tax</option>
-                                        <option value="fcExpDate">FC</option>
-                                        <option value="npExpDate">NP</option>
-                                    </select>
-                                    <button type="submit"
-                                        class="btn btn-sm border border-secondary-subtle btn-hover">GO</button>
-                                </div>
-                            </div>
-                        </div>
-
-                    </form>
-                </div>
-                <div class="row">
-                <div class="col">
-                    <span class="h6 font-semibold text-muted text-sm d-block mb-2">Card Name</span>
-                    <span class="h3 font-bold mb-0">--</span>
-                </div>
-                <div class="col-auto d-flex align-items-center justify-content-center">
-                    <div class="icon icon-shape bg-primary text-white text-lg rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                      <i class="bi bi-bus-front" style="scale: 1.6;"></i>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    </div> -->
 </div>
 
-<!-- Table data view -->
+<!-- past not returned -->
+{% if past_not_returned_items %}
 <div class="card shadow-sm border-0 p-3 pb-0 mt-1">
     <div class="table-responsive">
-        {% if items %}
-        <table class="table table-hover table-sm">
+        <table class="table table-hover table-sm" style="table-layout: fixed; width: 100%;">
+            <h5 class="text-center text-danger">Items that were not returned on previous dates</h5>
             <thead>
                 <tr>
-                    <th scope="col">Name</th>
-                    <th scope="col">Reg.No.</th>
-                    <th scope="col">Instrument</th>
-                    <th scope="col">Borrow Time</th>
-                    <th scope="col">Status</th>
+                    <th scope="col" style="width: 17%;">Name</th>
+                    <th scope="col" style="width: 12%;">Reg.No.</th>
+                    <th scope="col" style="width: 36%;">Instrument</th>
+                    <th scope="col" style="width: 20%;">Borrow Time</th>
+                    <th scope="col" style="width: 15%;">Status</th>
                 </tr>
             </thead>
             <tbody>
-                {% for item in items %}
+                {% for item in past_not_returned_items %}
                 <tr class="align-middle">
                     <td>
                         {{item.student.name}}
@@ -171,7 +128,7 @@
                         {% if not forloop.last %}, {% endif %}
                         {% endfor %}
                     </td>
-                    <td>
+                    <td class="text-danger">
                         {{item.borrowed_at}}
                     </td>
                     <td class="{% if item.status %}text-success{% else %}text-danger{% endif %}">
@@ -183,6 +140,62 @@
                     </td>
                 </tr>
                 {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+</div>
+{% endif %}
+
+
+<!-- Main data view -->
+<div class="card shadow-sm border-0 p-3 pb-0 mt-1">
+    <div class="table-responsive">
+        {% if transactions_count > 0 %}
+        <table class="table table-hover table-sm" style="table-layout: fixed; width: 100%;">
+            <thead>
+                <tr>
+                    <th scope="col" style="width: 17%;">Name</th>
+                    <th scope="col" style="width: 12%;">Reg.No.</th>
+                    <th scope="col" style="width: 36%;">Instrument</th>
+                    <th scope="col" style="width: 20%;">Borrow Time</th>
+                    <th scope="col" class="position-relative" style="width: 15%; padding-right: 0; white-space: nowrap;">
+                        <span style="padding-right: 60px;">Status</span>
+                        <form method="GET" style="position: absolute; top: 0px; right: 0px; margin: 0;">
+                            <select name="status" class="form-select form-select-sm" style="width: auto;font-size: 0.9em;" onchange="this.form.submit()">
+                                <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All</option>
+                                <option value="returned" {% if status_filter == 'returned' %}selected{% endif %}>Returned</option>
+                                <option value="not_returned" {% if status_filter == 'not_returned' %}selected{% endif %}>Not Returned</option>
+                            </select>
+                        </form>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if items %}
+                    {% for item in items %}
+                    <tr class="align-middle">
+                        <td>{{item.student.name}}</td>
+                        <td>{{item.student.regno}}</td>
+                        <td>
+                            {% for equipment in item.equipment.all %}
+                                {{ equipment.name }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </td>
+                        <td>{{item.borrowed_at}}</td>
+                        <td class="{% if item.status %}text-success{% else %}text-danger{% endif %}">
+                            {% if item.status %}Returned{% else %}Not Returned{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <!-- Message for no matching items -->
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">
+                            No items found for the filter.
+                        </td>
+                    </tr>
+                {% endif %}
             </tbody>
         </table>
         {% else %}

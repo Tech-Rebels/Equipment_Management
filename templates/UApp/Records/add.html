@@ -6,11 +6,13 @@
 {% block content %}
 <!-- css -->
 <style>
-    #equipment_name, #treatment_name {
+    #equipment_name,
+    #treatment_name {
         display: none;
     }
 
-    label[for="equipment_name"], label[for="treatment_name"] {
+    label[for="equipment_name"],
+    label[for="treatment_name"] {
         display: none;
     }
 
@@ -145,8 +147,13 @@
                         var borrowedItems = data.student.borrowed_items;
                         var borrowedItemsList = $('#borrowedItemsList');
                         borrowedItemsList.empty();
+
                         var availableEquipment = data.student.available_equipment;
                         var availableTreatment = data.student.treatment;
+                        var borrowedTreatment = data.student.borrowed_treatment_ids || [];
+
+                        console.log("Available Treatments:", availableTreatment);  
+                        console.log("Borrowed Treatments:", borrowedTreatment);
 
                         // Populate the equipment dropdown
                         var equipmentSelect = $('#equipment_name');
@@ -162,9 +169,21 @@
                             var optionText = isMedkit ? '[Kit] ' + item : item;
                             equipmentSelect.append('<option value="' + item + '">' + optionText + '</option>');
                         });
-                        availableTreatment.forEach(function (treatment) {
-                            treatmentSelect.append('<option value="' + treatment + '">' + treatment + '</option>');
-                        });
+
+                        // availableTreatment.forEach(function (treatment) {
+                        //     treatmentSelect.append('<option value="' + treatment + '">' + treatment + '</option>');
+                        // });
+
+                        if (Array.isArray(availableTreatment) && Array.isArray(borrowedTreatment)) {
+                            availableTreatment.forEach(function (treatment) {
+                                var isSelected = borrowedTreatment.includes(treatment);
+                                var option = '<option value="' + treatment + '"' + (isSelected ? ' selected' : '') + '>' + treatment + '</option>';
+                                treatmentSelect.append(option);
+                            });
+                        }
+
+
+
 
                         if (equipmentSelect.children('option').length > 0) {
                             $('label[for="equipment_name"]').show();
