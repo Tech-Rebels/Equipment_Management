@@ -21,6 +21,13 @@ class AddEquipmentForm(forms.ModelForm):
     class Meta:
         model = Equipment
         fields = ['name', 'count', 'order', 'category']
+        
+    def clean_name(self):
+        name = self.cleaned_data['name']
+        lab = self.instance.lab if self.instance.pk else self.initial.get('lab')
+        if Equipment.objects.filter(lab=lab, name__iexact=name).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError('Equipment name must be unique within the lab (case-insensitive).')
+        return name
 
 class EquipmentForm(forms.ModelForm):
     class Meta:

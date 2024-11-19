@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 
 # Create your models here.
 class Student(models.Model):
@@ -25,6 +26,25 @@ class Equipment(models.Model):
     available_count = models.IntegerField(null=True, blank=True)
     category = models.CharField(max_length=100, null=True, blank=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['lab', 'name'],
+                name='unique_lab_equipment_name',
+                condition=models.Q(name__isnull=False),
+                violation_error_message='Equipment name must be unique for each lab (case-insensitive).'
+            )
+        ]
+
+    def clean(self):
+        # Enforce case-insensitive uniqueness
+        if Equipment.objects.filter(lab=self.lab, name__iexact=self.name).exclude(pk=self.pk).exists():
+            raise ValidationError({'name': 'Equipment name must be unique within the lab (case-insensitive).'})
+
+    def save(self, *args, **kwargs):
+        self.full_clean()  
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.lab.username} - {self.name}"
 
@@ -42,6 +62,27 @@ class Treatment(models.Model):
     lab = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     treatment = models.CharField(max_length=100, null=False, blank=False)
     order = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['lab', 'treatment'],
+                name='unique_lab_treatment',
+                condition=models.Q(treatment__isnull=False),
+                violation_error_message='Treatment must be unique for each lab (case-insensitive).'
+            )
+        ]
+
+    def clean(self):
+        # Enforce case-insensitive uniqueness
+        if Treatment.objects.filter(lab=self.lab, treatment__iexact=self.treatment).exclude(pk=self.pk).exists():
+            raise ValidationError({'treatment': 'Treatment name must be unique within the lab (case-insensitive).'})
+
+    def save(self, *args, **kwargs):
+        # Normalize treatment name (e.g., capitalize)
+        self.treatment = self.treatment.strip().capitalize()
+        self.full_clean()  # Run validations before saving
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.treatment} - {self.lab.username}"

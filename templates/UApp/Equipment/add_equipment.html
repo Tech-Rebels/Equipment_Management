@@ -9,14 +9,22 @@
 <div class="d-flex justify-content-between flex-wrap flex-md nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">Add Instrument</h1>
 </div>
+
+<!-- messages -->
+{% include 'partials/messages.html'%}
+
+<!-- form -->
 <div class="container">
     <div class="row">
         <!-- <div class="col-lg-6 offset-md-3">
             <div class="border bg-white p-3 m-5"> -->
                 <form method="POST">
+                    <input type="hidden" id="edit-url" value="{% url 'edit-equipment' 0 %}">
+                    
 
                     {% csrf_token %}
                     {{ form|crispy }}
+                    
                     <div class="form-group mb-4 pt-2">
                         <a href="{% url 'equipments-list' %}" class="btn btn-danger">Cancel</a>
                         <button type="submit" class="btn btn-success">Submit</button>
@@ -27,4 +35,81 @@
     </div>
 </div>
 <br>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+    // Get the name input field
+    const nameInput = document.getElementById('id_name');
+    
+    // Create the suggestions div if it doesn’t exist
+    let suggestionsDiv = document.getElementById('suggestions');
+    if (!suggestionsDiv) {
+        suggestionsDiv = document.createElement('div');
+        suggestionsDiv.id = 'suggestions';
+        suggestionsDiv.style.position = 'relative'; 
+        suggestionsDiv.style.width = nameInput.offsetWidth + 'px'; 
+        nameInput.parentNode.insertBefore(suggestionsDiv, nameInput.nextSibling); // Insert after the input
+    }
+
+    // Event listener for showing suggestions
+    nameInput.addEventListener('input', function () {
+        const query = this.value;
+        const editUrlTemplate = document.getElementById('edit-url').value;
+
+        if (query.length > 0) {
+            fetch(`/equipment-name-suggestions/?query=${query}`)
+                .then(response => response.json())
+                .then(data => {
+                    suggestionsDiv.innerHTML = ''; // Clear previous suggestions
+
+                    data.forEach(item => {
+                        const suggestion = document.createElement('div');
+                        suggestion.className = 'suggestion-item';
+                        suggestion.textContent = item.name;
+                        suggestion.dataset.id = item.id;
+                        suggestion.addEventListener('click', function () {
+                            const editUrl = editUrlTemplate.replace('0', item.id);
+                            window.location.href = editUrl;
+                        });
+                        suggestionsDiv.appendChild(suggestion);
+                    });
+                });
+        } else {
+            suggestionsDiv.innerHTML = ''; // Clear suggestions if no query
+        }
+    });
+});
+
+
+
+
+</script>
+
+<style>
+    .suggestions {
+    position: absolute;
+    top: 100%; /* Positions below the input field */
+    left: 0;
+    width: 100%; /* Full width of the input field */
+    border: 1px solid #ddd;
+    background-color: #fff;
+    max-height: 150px;
+    margin-top: 5px;
+    overflow-y: auto;
+    z-index: 1000; /* Ensures it appears above other elements */
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Adds subtle shadow */
+}
+
+.suggestion-item {
+    padding: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #333;
+}
+
+.suggestion-item:hover {
+    background-color: #f7f7f7; /* Subtle highlight on hover */
+}
+
+</style>
 {% endblock content %}

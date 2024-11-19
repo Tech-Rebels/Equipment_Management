@@ -602,9 +602,21 @@ def Add_Equipment(request):
             equipment = form.save(commit=False)
             equipment.lab = request.user
             equipment.available_count = equipment.count
-            messages.success(request, 'Instrument added successfully.')
-            equipment.save()
-            return redirect('equipments-list')
+
+            # Case-insensitive duplicate check
+            if Equipment.objects.filter(lab=request.user, name__iexact=equipment.name).exists():
+                messages.error(request, 'An instrument with this name already exists in your lab (case-insensitive).')
+                return render(request, 'UApp/Equipment/add_equipment.html', {'form': form})
+
+            try:
+                # Normalize name before saving (e.g., capitalize)
+                equipment.name = equipment.name.strip().capitalize()
+                equipment.save()
+                messages.success(request, 'Instrument added successfully.')
+                return redirect('equipments-list')
+            except Exception as e:
+                messages.error(request, 'An error occurred while adding the equipment.')
+                return render(request, 'UApp/Equipment/add_equipment.html', {'form': form})
     else:
         form = AddEquipmentForm()
     return render(request, 'UApp/Equipment/add_equipment.html', {'form': form})
@@ -620,16 +632,27 @@ def Edit_Equipment(request, pk):
             equipment = form.save(commit=False)
             new_count = equipment.count
 
+            # Case-insensitive duplicate check
+            if (
+                Equipment.objects.filter(lab=equipment.lab, name__iexact=equipment.name)
+                .exclude(pk=equipment.pk)
+                .exists()
+            ):
+                messages.error(request, f'An instrument with the name "{equipment.name}" already exists in your lab (case-insensitive).')
+                return render(request, 'UApp/Equipment/edit_equipment.html', {'form': form})
+
             if new_count != original_count:
                 difference = new_count - original_count
                 equipment.available_count = max(equipment.available_count + difference, 0)
 
+            # Normalize name before saving (e.g., capitalize)
+            equipment.name = equipment.name.strip().capitalize()
             equipment.save()
             messages.success(request, 'Instrument edited successfully.')
             return redirect('equipments-list')
     else:
         form = EquipmentForm(instance=equipment)
-    
+
     return render(request, 'UApp/Equipment/edit_equipment.html', {'form': form})
 
 @user_passes_test_custom(is_user, 'dashboard-index')
@@ -670,6 +693,12 @@ def Search_Equipment(request):
         }
 
         return JsonResponse(data, safe=False)
+
+@login_required
+def suggest_equipment(request):
+    query = request.GET.get('query', '')
+    suggestions = Equipment.objects.filter(name__icontains=query, lab=request.user).values('name', 'id')[:5]
+    return JsonResponse(list(suggestions), safe=False)
 
 # Medical Kit
 @user_passes_test_custom(is_user, 'dashboard-index')
@@ -795,8 +824,14 @@ def Add_Treatment(request):
         if form.is_valid():
             treat = form.save(commit=False)
             treat.lab = request.user
-            messages.success(request, 'Treatment added successfully.')
+
+            # Check for duplicates within the same lab
+            if Treatment.objects.filter(lab=request.user, treatment__iexact=treat.treatment).exists():
+                messages.error(request, 'This treatment already exists in your lab.')
+                return render(request, 'UApp/Treatment/add_treatment.html', {'form': form})
+            
             treat.save()
+            messages.success(request, 'Treatment added successfully.')
             return redirect('treatments-list')
     else:
         form = AddTreatmentForm()
@@ -805,20 +840,24 @@ def Add_Treatment(request):
 @user_passes_test_custom(is_user, 'dashboard-index')
 def Edit_Treatment(request, pk):
     treatment = get_object_or_404(Treatment, id=pk, lab=request.user)
-    
+
     if request.method == 'POST':
         form = EditTreatmentForm(request.POST, instance=treatment)
         if form.is_valid():
-            form.save()
+            updated_treatment = form.save(commit=False)
+
+            # Check for duplicates within the same lab (excluding the current treatment)
+            if Treatment.objects.filter(lab=request.user, treatment__iexact=updated_treatment.treatment).exclude(id=treatment.id).exists():
+                messages.error(request, 'This treatment already exists in your lab.')
+                return render(request, 'UApp/Treatment/edit_treatment.html', {'form': form})
+
+            updated_treatment.save()
             messages.success(request, 'Treatment edited successfully.')
-            return redirect('treatments-list')  
+            return redirect('treatments-list')
     else:
         form = EditTreatmentForm(instance=treatment)
-        context = {
-            'form': form,
-        }
 
-    return render(request, 'UApp/Treatment/edit_treatment.html', context)
+    return render(request, 'UApp/Treatment/edit_treatment.html', {'form': form})
 
 @user_passes_test_custom(is_user, 'dashboard-index')
 def Delete_Treatment(request, pk):

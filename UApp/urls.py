@@ -29,6 +29,7 @@ urlpatterns = [
     path('equipment/edit/<int:pk>/', views.Edit_Equipment, name='edit-equipment'),
     path('equipment/delete/<int:pk>/', views.Delete_Equipment, name='delete-equipment'),
     path('search-equipment', views.Search_Equipment, name='search-equipment'),
+    path('equipment-name-suggestions/', views.suggest_equipment, name='equipment-name-suggestions'),
 
     path('equipments/medical-kit/add/', views.Add_MedicalKit, name='add-medicalKit'),
     path('equipments/medical-kit/edit/<int:kit_id>/', views.Edit_MedicalKit, name='edit-medicalkit'),
