@@ -501,7 +501,7 @@ def Return_Equipment(request):
 
         try:
             student = Student.objects.get(rfidno=rfidno)
-            transactions = Transaction.objects.filter(student=student, status=False)
+            transactions = Transaction.objects.filter(student=student, status=False, handled_by=request.user)
             success_count = 0
             error_count = 0
 
@@ -543,8 +543,32 @@ def get_student_details(request):
     if rfidno:
         try:
             student = Student.objects.get(rfidno=rfidno)
+            
             transactions = Transaction.objects.filter(student=student, status=False, handled_by=request.user)
             borrowed_items = list(transactions.values('id', 'equipment__name', 'borrowed_at'))
+
+            other_lab_transactions = Transaction.objects.filter(student=student, status=False).exclude(handled_by=request.user).select_related('handled_by').prefetch_related('equipment')
+            
+            other_lab_borrowed_items = []
+            other_lab_name = None
+            
+            if other_lab_transactions.exists():
+                other_lab_name = other_lab_transactions.first().handled_by.get_full_name() or other_lab_transactions.first().handled_by.username
+                
+                other_lab_borrowed_items = list(other_lab_transactions.values(
+                    'id', 
+                    'equipment__name', 
+                    'borrowed_at',
+                    'handled_by__username',
+                    'handled_by__first_name',
+                    'handled_by__last_name'
+                ))
+                
+                for item in other_lab_borrowed_items:
+                    lab_name = f"{item['handled_by__first_name']} {item['handled_by__last_name']}".strip()
+                    if not lab_name:
+                        lab_name = item['handled_by__username']
+                    item['lab_name'] = lab_name
 
             borrowed_equipment_ids = transactions.values_list('equipment', flat=True)
             borrowed_treatment_ids = transactions.values_list('treatment', flat=True)
@@ -552,7 +576,6 @@ def get_student_details(request):
 
             available_equipment = Equipment.objects.filter(lab=request.user, available_count__gt=0).exclude(id__in=borrowed_equipment_ids).order_by(Coalesce('order', Value(float('inf'))).asc()).values_list('name', flat=True)
             available_medkits = MedicalKit.objects.filter(lab=request.user).exclude(Q(equipment__available_count__lte=0) | Q(equipment__id__in=borrowed_equipment_ids)).order_by(Coalesce('order', Value(float('inf'))).asc()).values_list('kitName', flat=True)  
-            # treatment = Treatment.objects.filter(lab=request.user).exclude(id__in=borrowed_treatment_ids).order_by(Coalesce('order', Value(float('inf'))).asc()).values_list('treatment', flat=True)  
             treatment = Treatment.objects.filter(lab=request.user).order_by(Coalesce('order', Value(float('inf'))).asc()).values_list('treatment', flat=True)  
 
             student_data = {
@@ -560,9 +583,11 @@ def get_student_details(request):
                 'regno': student.regno,
                 'image_url': student.image.url,
                 'borrowed_items': borrowed_items,
+                'other_lab_borrowed_items': other_lab_borrowed_items,
+                'other_lab_name': other_lab_name,
                 'available_equipment': list(available_medkits) + list(available_equipment),
                 'borrowed_treatment_ids': list(previously_selected_treatments),
-                'treatment' : list(treatment)
+                'treatment': list(treatment)
             }
             return JsonResponse({'success': True, 'student': student_data})
         except Student.DoesNotExist:

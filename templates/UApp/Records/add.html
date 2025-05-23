@@ -38,6 +38,7 @@
 {% include 'partials/messages.html'%}
 
 <!-- caution message -->
+<!-- same lab not returned  -->
 <div id="borrowedItems" class="messages mt-1 position-absolute" style="top:8vh; left:40vw; display:none;">
     <div class="alert alert-sm alert-danger alert-dismissible fade show" role="alert">
         <h5>Student not returned some Instruments</h5>
@@ -47,7 +48,18 @@
         <button id="proceedButton" class="btn btn-sm btn-danger">Add-on</button>
     </div>
 </div>
+<!-- other lab not returned -->
+<div id="otherLabBorrowedItems" class="messages mt-1 position-absolute" style="top:8vh; left:40vw; display:none;">
+    <div class="alert alert-sm alert-danger alert-dismissible fade show" role="alert">
+        <h5>Student not returned some Instruments from 'Lab name'</h5>
+        <h6>Borrowed Items:</h6>
+        <ul id="otherLabBorrowedItemsList"></ul>
+        <p>Return items from 'lab name' to borrow new items</p>
+        <a href="{% url 'dashboard-index' %}" class="btn btn-sm btn-primary">Cancel</a>
+    </div>
+</div>
 
+<!-- borrow form -->
 <form action="{% url 'borrow-equipment' %}" method="POST">
     {% csrf_token %}
     <div class="row form-group mb-4">
@@ -145,15 +157,20 @@
                         $('#studentphoto').attr('src', data.student.image_url);
 
                         var borrowedItems = data.student.borrowed_items;
+                        var otherLabBorrowedItems = data.student.other_lab_borrowed_items || [];
+                        var otherLabName = data.student.other_lab_name;
+
                         var borrowedItemsList = $('#borrowedItemsList');
+                        var otherLabBorrowedItemsList = $('#otherLabBorrowedItemsList');
                         borrowedItemsList.empty();
+                        otherLabBorrowedItemsList.empty();
 
                         var availableEquipment = data.student.available_equipment;
                         var availableTreatment = data.student.treatment;
                         var borrowedTreatment = data.student.borrowed_treatment_ids || [];
 
-                        console.log("Available Treatments:", availableTreatment);  
-                        console.log("Borrowed Treatments:", borrowedTreatment);
+                        // console.log("Available Treatments:", availableTreatment);
+                        // console.log("Borrowed Treatments:", borrowedTreatment);
 
                         // Populate the equipment dropdown
                         var equipmentSelect = $('#equipment_name');
@@ -161,18 +178,38 @@
                         equipmentSelect.empty();
                         treatmentSelect.empty();
 
-                        // availableEquipment.forEach(function (equipment) {
-                        //     equipmentSelect.append('<option value="' + equipment + '">' + equipment + '</option>');
-                        // });
+                        // Check if student has unreturned items from other labs first
+                        if (otherLabBorrowedItems.length > 0) {
+                            $('#otherLabBorrowedItems').show();
+                            $('#borrowedItems').hide();
+                            $('#submitButton').prop('disabled', true);
+
+                            // Update the lab name in the alert
+                            $('#otherLabBorrowedItems h5').text('Student not returned some Instruments from \'' + otherLabName + '\'');
+                            $('#otherLabBorrowedItems p').text('Return items from \'' + otherLabName + '\' to borrow new items');
+
+                            otherLabBorrowedItems.forEach(function (item) {
+                                var borrowedAt = new Date(item.borrowed_at);
+                                var hours = borrowedAt.getHours();
+                                var minutes = borrowedAt.getMinutes().toString().padStart(2, '0');
+                                var ampm = hours >= 12 ? 'PM' : 'AM';
+                                hours = hours % 12;
+                                hours = hours ? hours : 12;
+                                var formattedTime = hours + ':' + minutes + ' ' + ampm;
+
+                                var listItem = '<li>' + item.equipment__name + ' (Borrowed at: ' + formattedTime + ')</li>';
+                                otherLabBorrowedItemsList.append(listItem);
+                            });
+
+                            // Don't populate equipment/treatment options since student can't borrow
+                            return;
+                        }
+
                         availableEquipment.forEach(function (item) {
-                            var isMedkit = item.includes('Kit:');  // Assuming medkit names are prefixed with "Kit:"
+                            var isMedkit = item.includes('Kit:');
                             var optionText = isMedkit ? '[Kit] ' + item : item;
                             equipmentSelect.append('<option value="' + item + '">' + optionText + '</option>');
                         });
-
-                        // availableTreatment.forEach(function (treatment) {
-                        //     treatmentSelect.append('<option value="' + treatment + '">' + treatment + '</option>');
-                        // });
 
                         if (Array.isArray(availableTreatment) && Array.isArray(borrowedTreatment)) {
                             availableTreatment.forEach(function (treatment) {
@@ -182,16 +219,12 @@
                             });
                         }
 
-
-
-
                         if (equipmentSelect.children('option').length > 0) {
                             $('label[for="equipment_name"]').show();
                         }
                         if (treatmentSelect.children('option').length > 0) {
                             $('label[for="treatment_name"]').show();
                         }
-
 
                         new MultiSelectTag('equipment_name', {
                             rounded: true,
@@ -204,10 +237,6 @@
                             placeholder: 'Search',
                         });
 
-                        // $('.input-container').click(function () {
-                        //     $('.btn-container button').click();
-                        // });
-
                         $(document).ready(function () {
                             $('.input-container').each(function () {
                                 $(this).click(function () {
@@ -216,8 +245,10 @@
                             });
                         });
 
+                        // Check current lab borrowed items (existing logic)
                         if (borrowedItems.length > 0) {
                             $('#borrowedItems').show();
+                            $('#otherLabBorrowedItems').hide();
                             $('#submitButton').prop('disabled', true);
                             borrowedItems.forEach(function (item) {
                                 var borrowedAt = new Date(item.borrowed_at);
@@ -225,7 +256,7 @@
                                 var minutes = borrowedAt.getMinutes().toString().padStart(2, '0');
                                 var ampm = hours >= 12 ? 'PM' : 'AM';
                                 hours = hours % 12;
-                                hours = hours ? hours : 12; // the hour '0' should be '12'
+                                hours = hours ? hours : 12;
                                 var formattedTime = hours + ':' + minutes + ' ' + ampm;
 
                                 var listItem = '<li>' + item.equipment__name + ' (Borrowed at: ' + formattedTime + ')</li>';
@@ -233,6 +264,7 @@
                             });
                         } else {
                             $('#borrowedItems').hide();
+                            $('#otherLabBorrowedItems').hide();
                             $('#submitButton').prop('disabled', false);
                         }
                     } else {
@@ -247,6 +279,7 @@
             });
         }
     }
+
 
     // Debounce the request function with a delay of 200ms
     var debouncedRequestStudentDetails = debounce(requestStudentDetails, 200);
